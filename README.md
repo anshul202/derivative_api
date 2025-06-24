@@ -7,23 +7,8 @@ For questions, issues, or feature requests:
 - Review the [health endpoint](https://chainfly-derivative-finance.onrender.com/health) for service status
 
 ---
+---
 
-chainfly-derivative-finance/
-├── main.py # FastAPI application entry point
-├── models/
-│ ├── solar_models.py # Solar system request/response models
-│ └── pricing_models.py # Futures pricing models
-├── services/
-│ ├── solar_service.py # PVWatts API integration
-│ ├── futures_service.py # Monte Carlo pricing engine
-│ └── iex_price_service.py # IEX India price scraping
-├── routers/
-│ ├── solar.py # Solar endpoints
-│ └── futures.py # Futures endpoints
-├── config/
-│ └── settings.py # Configuration management
-├── requirements.txt
-└── README.md
 ## Financial Models
 
 ### Price Simulation
