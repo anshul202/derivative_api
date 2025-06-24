@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException, BackgroundTasks
 from datetime import datetime
 import numpy as np
 from typing import List
+import logging
 
 from models.pricing_models import (
     ElectricityFuturesRequest, 
@@ -10,9 +11,11 @@ from models.pricing_models import (
 )
 from services.futures_service import futures_service
 from services.solar_service import PVWattsService
+from services.iex_price_service import iex_service  # Add IEX service import
 from config.settings import get_settings
 from models.solar_models import SolarSystemRequest
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/futures", tags=["Electricity Futures"])
 
 @router.post("/electricity", response_model=ElectricityFuturesResponse)
@@ -21,16 +24,31 @@ async def create_electricity_futures(
     background_tasks: BackgroundTasks
 ) -> ElectricityFuturesResponse:
     """
-    Create electricity futures contracts based on solar generation and price simulation
+    Create electricity futures contracts with live IEX spot prices if current_spot_price is not provided
     
     This endpoint integrates:
-    1. Solar generation forecasting (PVWatts)
-    2. Electricity price simulation (mean-reversion model)
-    3. Futures contract pricing (Monte Carlo)
-    4. Risk analytics (VaR, ES, Greeks)
+    1. Live IEX price fetching (if current_spot_price is None)
+    2. Solar generation forecasting (PVWatts)
+    3. Electricity price simulation (mean-reversion model)
+    4. Futures contract pricing (Monte Carlo)
+    5. Risk analytics (VaR, ES, Greeks)
     """
     try:
-        # 1. Get solar generation forecast using existing solar service
+        # 1. Get live IEX spot price if not provided
+        if request.current_spot_price is None:
+            iex_data = await iex_service.get_current_spot_price()
+            current_price = iex_data['spot_price_usd_mwh']  # Use USD for international compatibility
+            logger.info(f"Fetched live IEX price: ${current_price:.2f}/MWh (₹{iex_data['spot_price_rs_mwh']:.2f}/MWh)")
+        else:
+            current_price = request.current_spot_price
+        
+        # 2. Auto-estimate long-term mean if not provided
+        if request.long_term_price_mean is None:
+            long_term_mean = current_price * 0.95  # Slight discount for long-term
+        else:
+            long_term_mean = request.long_term_price_mean
+        
+        # 3. Get solar generation forecast using existing solar service
         settings = get_settings()
         solar_service = PVWattsService(settings.nrel_api_key)
         
@@ -49,18 +67,18 @@ async def create_electricity_futures(
         solar_output = await solar_service.get_monthly_output(solar_request)
         monthly_generation_mwh = [kwh / 1000 for kwh in solar_output.ac_monthly]
         
-        # 2. Simulate electricity price paths
+        # 4. Simulate electricity price paths using current_price (from IEX or user input)
         price_paths = futures_service.simulate_mean_reverting_prices(
-            s0=request.current_spot_price,
+            s0=current_price,  # Use fetched or provided price
             kappa=request.mean_reversion_speed,
-            theta=request.long_term_price_mean,
+            theta=long_term_mean,  # Use calculated or provided long-term mean
             sigma=request.price_volatility,
             T=request.contract_months / 12,
             n_steps=request.contract_months,
             n_paths=request.monte_carlo_paths
         )
         
-        # 3. Calculate futures fair values
+        # 5. Calculate futures fair values
         time_to_delivery = [(i + 1) / 12 for i in range(request.contract_months)]
         futures_prices, price_volatilities = futures_service.calculate_futures_fair_value(
             price_paths, 
@@ -69,7 +87,7 @@ async def create_electricity_futures(
             time_to_delivery
         )
         
-        # 4. Generate revenue simulations for risk analysis
+        # 6. Generate revenue simulations for risk analysis
         revenue_simulations = []
         for path in price_paths:
             monthly_revenues = []
@@ -80,7 +98,7 @@ async def create_electricity_futures(
                 monthly_revenues.append(revenue)
             revenue_simulations.append(monthly_revenues)
         
-        # 5. Create futures contracts
+        # 7. Create futures contracts
         futures_contracts = []
         month_names = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", 
                       "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
@@ -93,7 +111,7 @@ async def create_electricity_futures(
             if month < len(futures_prices) and month < len(monthly_generation_mwh):
                 greeks = futures_service.calculate_greeks(
                     futures_prices[month],
-                    request.current_spot_price,
+                    current_price,  # Use current_price instead of request.current_spot_price
                     price_volatilities[month] if month < len(price_volatilities) else 0.25,
                     time_to_delivery[month] if month < len(time_to_delivery) else (month + 1) / 12
                 )
@@ -110,10 +128,10 @@ async def create_electricity_futures(
                 )
                 futures_contracts.append(contract)
         
-        # 6. Calculate portfolio risk metrics
+        # 8. Calculate portfolio risk metrics
         risk_metrics = futures_service.calculate_portfolio_risk_metrics(revenue_simulations)
         
-        # 7. Calculate correlation between solar and prices
+        # 9. Calculate correlation between solar and prices
         if len(monthly_generation_mwh) >= 12 and len(futures_prices) >= 12:
             solar_seasonal = np.array(monthly_generation_mwh[:12])
             price_seasonal = np.array(futures_prices[:12])
@@ -136,14 +154,29 @@ async def create_electricity_futures(
             pricing_timestamp=datetime.now(),
             model_parameters={
                 "kappa": request.mean_reversion_speed,
-                "theta": request.long_term_price_mean,
+                "theta": long_term_mean,  # Use calculated long_term_mean
                 "sigma": request.price_volatility,
-                "monte_carlo_paths": request.monte_carlo_paths
+                "monte_carlo_paths": request.monte_carlo_paths,
+                "current_spot_price_source": "IEX_live" if request.current_spot_price is None else "user_provided"
             }
         )
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Futures pricing failed: {str(e)}")
+
+# Add new endpoint to check current IEX prices
+@router.get("/current-price")
+async def get_current_electricity_price():
+    """Get current IEX electricity spot price"""
+    try:
+        price_data = await iex_service.get_current_spot_price()
+        return {
+            "current_prices": price_data,
+            "note": "Prices updated every 15 minutes from IEX India",
+            "usage": "Use spot_price_usd_mwh for futures pricing"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Price fetch failed: {str(e)}")
 
 @router.get("/market-data")
 async def get_futures_market_data():
@@ -156,7 +189,8 @@ async def get_futures_market_data():
             "trading_unit": "MWh",
             "price_currency": "USD",
             "settlement": "Physical delivery",
-            "current_year": current_year  # Show current year in market data
+            "current_year": current_year,
+            "price_source": "IEX India (auto-fetched if not provided)"
         },
         "typical_parameters": {
             "spot_price_range": "$30-150/MWh",
@@ -165,7 +199,7 @@ async def get_futures_market_data():
             "seasonal_premium": "Summer +15%, Winter -10%"
         },
         "contract_specifications": {
-            "delivery_months": [f"{current_year}-{month+1:02d}" for month in range(12)],  # Dynamic months
+            "delivery_months": [f"{current_year}-{month+1:02d}" for month in range(12)],
             "contract_symbols": [f"SOLAR-{name}{str(current_year)[-2:]}" for name in 
                                ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", 
                                 "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]],
@@ -184,5 +218,6 @@ async def futures_health_check():
         "service": "electricity_futures",
         "current_year": current_year,
         "contract_year": current_year,
+        "price_integration": "IEX India live prices",
         "timestamp": datetime.now()
     }

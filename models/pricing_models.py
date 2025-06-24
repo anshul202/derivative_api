@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List
+from typing import List, Optional
 from datetime import datetime
 from enum import Enum
 
@@ -21,10 +21,11 @@ class DeliveryMonth(str, Enum):
     NOV = f"{current_year}-11"
     DEC = f"{current_year}-12"
 
+
 class ElectricityFuturesRequest(BaseModel):
     """Request model for creating electricity futures contracts based on solar output"""
     
-    # Solar system parameters (simplified from your existing solar models)
+    # Solar system parameters
     latitude: float = Field(..., ge=-90, le=90, description="Solar farm latitude")
     longitude: float = Field(..., ge=-180, le=180, description="Solar farm longitude")
     system_capacity_kw: float = Field(..., gt=0, description="Solar system capacity in kW")
@@ -34,16 +35,19 @@ class ElectricityFuturesRequest(BaseModel):
     azimuth: float = Field(180, ge=0, lt=360, description="Panel azimuth (180=south)")
     losses: float = Field(14, ge=-5, le=99, description="System losses %")
     
-    # Electricity market parameters
-    current_spot_price: float = Field(..., gt=0, description="Current electricity spot price $/MWh")
+    # Electricity market parameters - MAKE THESE OPTIONAL
+    current_spot_price: Optional[float] = Field(None, gt=0, description="Current electricity spot price $/MWh (auto-fetched from IEX if None)")
     price_volatility: float = Field(0.25, gt=0, le=2, description="Annual price volatility")
     mean_reversion_speed: float = Field(1.5, gt=0, description="Price mean reversion speed (kappa)")
-    long_term_price_mean: float = Field(..., gt=0, description="Long-term electricity price $/MWh")
+    long_term_price_mean: Optional[float] = Field(None, gt=0, description="Long-term electricity price $/MWh (auto-estimated if None)")
     
     # Futures contract specifications
     contract_months: int = Field(12, ge=1, le=24, description="Number of monthly contracts")
     risk_free_rate: float = Field(0.04, ge=0, le=0.2, description="Risk-free rate")
     monte_carlo_paths: int = Field(10000, ge=1000, le=100000, description="MC simulation paths")
+
+
+
 
 class ElectricityFuturesContract(BaseModel):
     """Individual futures contract specification"""
