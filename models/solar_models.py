@@ -5,7 +5,7 @@ from datetime import datetime
 
 class SolarSystemRequest(BaseModel):
     """Request model for PVWatts solar system configuration"""
-    latitude: float = Field(..., ge=-90, le=90, description="Latitude in decimal degrees")
+    latitude: float = Field(..., ge=-89.8, le=90, description="Latitude in decimal degrees")
     longitude: float = Field(..., ge=-180, le=180, description="Longitude in decimal degrees")
     system_capacity: float = Field(1.0, gt=0.05, le=500000, description="System capacity in kW")
     

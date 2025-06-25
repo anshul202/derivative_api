@@ -25,9 +25,9 @@ class DeliveryMonth(str, Enum):
 class ElectricityFuturesRequest(BaseModel):
     """Request model for creating electricity futures contracts based on solar output"""
     
-    # Solar system parameters
-    latitude: float = Field(..., ge=-90, le=90, description="Solar farm latitude")
-    longitude: float = Field(..., ge=-180, le=180, description="Solar farm longitude")
+    # Solar system parameters with sensible defaults (fixes Swagger UI issue)
+    latitude: float = Field(28.6139, ge=-89.9, le=89.9, description="Solar farm latitude")
+    longitude: float = Field(77.2090, ge=-179.9, le=179.9, description="Solar farm longitude")
     system_capacity_kw: float = Field(..., gt=0, description="Solar system capacity in kW")
     module_type: int = Field(1, ge=0, le=2, description="0=Standard, 1=Premium, 2=Thin film")
     array_type: int = Field(1, ge=0, le=4, description="Array mounting type")
@@ -35,7 +35,7 @@ class ElectricityFuturesRequest(BaseModel):
     azimuth: float = Field(180, ge=0, lt=360, description="Panel azimuth (180=south)")
     losses: float = Field(14, ge=-5, le=99, description="System losses %")
     
-    # Electricity market parameters - MAKE THESE OPTIONAL
+    # Electricity market parameters - optional with proper defaults
     current_spot_price: Optional[float] = Field(None, gt=0, description="Current electricity spot price $/MWh (auto-fetched from IEX if None)")
     price_volatility: float = Field(0.25, gt=0, le=2, description="Annual price volatility")
     mean_reversion_speed: float = Field(1.5, gt=0, description="Price mean reversion speed (kappa)")
@@ -45,7 +45,6 @@ class ElectricityFuturesRequest(BaseModel):
     contract_months: int = Field(12, ge=1, le=24, description="Number of monthly contracts")
     risk_free_rate: float = Field(0.04, ge=0, le=0.2, description="Risk-free rate")
     monte_carlo_paths: int = Field(10000, ge=1000, le=100000, description="MC simulation paths")
-
 
 
 
