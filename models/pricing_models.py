@@ -35,6 +35,13 @@ class ElectricityFuturesRequest(BaseModel):
     azimuth: float = Field(180, ge=0, lt=360, description="Panel azimuth (180=south)")
     losses: float = Field(14, ge=-5, le=99, description="System losses %")
     
+    # ✅ ADDED MISSING BIFACIAL PARAMETERS
+    bifaciality: Optional[float] = Field(None, ge=0, le=1, description="Bifacial factor (0.6-0.9)")
+    albedo: Optional[float] = Field(None, ge=0, le=1, description="Ground reflectance (0=no reflection, 1=perfect reflection)")
+    dc_ac_ratio: float = Field(1.2, gt=0, description="DC to AC ratio")
+    gcr: float = Field(0.4, ge=0.01, le=0.99, description="Ground coverage ratio")
+    inv_eff: float = Field(96.0, ge=90, le=99.5, description="Inverter efficiency")
+    
     # Electricity market parameters - optional with proper defaults
     current_spot_price: Optional[float] = Field(None, gt=0, description="Current electricity spot price $/MWh (auto-fetched from IEX if None)")
     price_volatility: float = Field(0.25, gt=0, le=2, description="Annual price volatility")
@@ -45,7 +52,6 @@ class ElectricityFuturesRequest(BaseModel):
     contract_months: int = Field(12, ge=1, le=24, description="Number of monthly contracts")
     risk_free_rate: float = Field(0.04, ge=0, le=0.2, description="Risk-free rate")
     monte_carlo_paths: int = Field(10000, ge=1000, le=100000, description="MC simulation paths")
-
 
 
 class ElectricityFuturesContract(BaseModel):

@@ -28,10 +28,11 @@ async def create_electricity_futures(
     
     This endpoint integrates:
     1. Live IEX price fetching (if current_spot_price is None)
-    2. Solar generation forecasting (PVWatts)
+    2. Solar generation forecasting (PVWatts) with bifacial enhancement
     3. Electricity price simulation (mean-reversion model)
     4. Futures contract pricing (Monte Carlo)
     5. Risk analytics (VaR, ES, Greeks)
+
     """
     try:
         # 1. Get live IEX spot price if not provided
@@ -52,7 +53,7 @@ async def create_electricity_futures(
         settings = get_settings()
         solar_service = PVWattsService(settings.nrel_api_key)
         
-        # Create solar request from futures request
+        # ✅ FIXED: Create solar request with ALL parameters including bifaciality and albedo
         solar_request = SolarSystemRequest(
             latitude=request.latitude,
             longitude=request.longitude,
@@ -61,11 +62,28 @@ async def create_electricity_futures(
             array_type=request.array_type,
             tilt=request.tilt,
             azimuth=request.azimuth,
-            losses=request.losses
+            losses=request.losses,
+            
+            # ✅ ADD BIFACIAL PARAMETERS THAT WERE MISSING
+            bifaciality=getattr(request, 'bifaciality', None),
+            albedo=getattr(request, 'albedo', None),
+            dc_ac_ratio=getattr(request, 'dc_ac_ratio', 1.2),
+            gcr=getattr(request, 'gcr', 0.4),
+            inv_eff=getattr(request, 'inv_eff', 96.0)
         )
+        
+        # ✅ ADD DEBUG LOGGING
+        logger.info(f"🔍 Futures request bifaciality: {getattr(request, 'bifaciality', None)}")
+        logger.info(f"🔍 Futures request albedo: {getattr(request, 'albedo', None)}")
+        logger.info(f"🔍 Solar request created with bifaciality={solar_request.bifaciality}, albedo={solar_request.albedo}")
         
         solar_output = await solar_service.get_monthly_output(solar_request)
         monthly_generation_mwh = [kwh / 1000 for kwh in solar_output.ac_monthly]
+        
+        # ✅ ADD GENERATION DEBUG LOGGING
+        logger.info(f"📊 Monthly generation MWh: {[round(x, 2) for x in monthly_generation_mwh]}")
+        logger.info(f"📊 Annual generation: {sum(monthly_generation_mwh):.2f} MWh")
+        logger.info(f"📊 Capacity factor: {solar_output.capacity_factor:.2f}%")
         
         # 4. Simulate electricity price paths using current_price (from IEX or user input)
         price_paths = futures_service.simulate_mean_reverting_prices(
@@ -86,6 +104,10 @@ async def create_electricity_futures(
             request.risk_free_rate,
             time_to_delivery
         )
+        
+        # ✅ ADD FUTURES PRICING DEBUG LOGGING
+        logger.info(f"💰 Average futures price: ${np.mean(futures_prices):.2f}/MWh")
+        logger.info(f"💰 Futures price range: ${min(futures_prices):.2f} - ${max(futures_prices):.2f}/MWh")
         
         # 6. Generate revenue simulations for risk analysis
         revenue_simulations = []
@@ -139,12 +161,16 @@ async def create_electricity_futures(
         else:
             correlation = 0.0
         
+        # ✅ ADD FINAL PORTFOLIO DEBUG LOGGING
+        total_portfolio_value = sum(c.expected_revenue for c in futures_contracts)
+        logger.info(f"🎯 Total portfolio value: ${total_portfolio_value:,.2f}")
+        
         return ElectricityFuturesResponse(
             monthly_solar_output_mwh=monthly_generation_mwh,
             annual_generation_mwh=sum(monthly_generation_mwh),
             capacity_factor=solar_output.capacity_factor,
             futures_contracts=futures_contracts,
-            total_portfolio_value=sum(c.expected_revenue for c in futures_contracts),
+            total_portfolio_value=total_portfolio_value,
             portfolio_volatility=risk_metrics["revenue_volatility"],
             sharpe_ratio=risk_metrics["sharpe_ratio"],
             value_at_risk_95=risk_metrics["value_at_risk_95"],
@@ -157,11 +183,14 @@ async def create_electricity_futures(
                 "theta": long_term_mean,  # Use calculated long_term_mean
                 "sigma": request.price_volatility,
                 "monte_carlo_paths": request.monte_carlo_paths,
-                "current_spot_price_source": "IEX_live" if request.current_spot_price is None else "user_provided"
+                "current_spot_price_source": "IEX_live" if request.current_spot_price is None else "user_provided",
+                "bifaciality": getattr(request, 'bifaciality', None),
+                "albedo": getattr(request, 'albedo', None)
             }
         )
         
     except Exception as e:
+        logger.error(f"❌ Futures pricing failed: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Futures pricing failed: {str(e)}")
 
 # Add new endpoint to check current IEX prices
