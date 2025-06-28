@@ -1,7 +1,10 @@
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse
+from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 import logging
+import os
 from datetime import datetime
 
 from routers import solar, futures
@@ -25,6 +28,17 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
+# Setup templates directory
+if not os.path.exists("templates"):
+    os.makedirs("templates")
+
+# Setup static directory  
+if not os.path.exists("static"):
+    os.makedirs("static")
+
+# Setup Jinja2 templates
+templates = Jinja2Templates(directory="templates")
+
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
@@ -34,10 +48,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Mount static files
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
 # Include routers
 app.include_router(solar.router)
 app.include_router(futures.router)
 
+# ✅ ADD FRONTEND ROUTE
+@app.get("/frontend", response_class=HTMLResponse)
+async def frontend_interface(request: Request):
+    """Serve the frontend interface for the API"""
+    return templates.TemplateResponse("index.html", {"request": request})
+
+# Your existing endpoints...
 @app.get("/")
 async def root():
     """API information and available endpoints"""
@@ -66,44 +90,19 @@ async def root():
             "futures_market_data": "/futures/market-data",
             "futures_health": "/futures/health",
             
+            # Frontend
+            "web_interface": "/frontend",
+            
             # System endpoints
             "health_check": "/health",
             "api_summary": "/api-summary",
             "api_documentation": "/docs",
             "alternative_docs": "/redoc"
-        },
-        "data_sources": {
-            "solar_data": "NREL PVWatts V8 API with NSRDB 2020 TMY data",
-            "electricity_prices": "IEX India real-time market data (auto-fetched)",
-            "price_modeling": "Ornstein-Uhlenbeck mean-reversion process",
-            "risk_analytics": "Monte Carlo simulation with 10,000+ paths",
-            "currency_conversion": "USD to INR with live exchange rates"
-        },
-        "supported_features": {
-            "solar_calculations": [
-                "Monthly/annual AC generation",
-                "Capacity factor analysis", 
-                "Performance ratio calculations",
-                "Weather station validation",
-                "Hourly generation profiles"
-            ],
-            "futures_contracts": [
-                "Solar-backed electricity futures",
-                "Dynamic contract year (automatically updates)",
-                "Risk metrics (VaR, Expected Shortfall)",
-                "Portfolio optimization",
-                "Live IEX price integration",
-                "Dual currency pricing (USD/INR)"
-            ],
-            "price_modeling": [
-                "Mean-reversion simulation",
-                "Monte Carlo path generation",
-                "Greeks calculation",
-                "Risk-adjusted pricing",
-                "Auto price fetching from IEX"
-            ]
         }
     }
+
+# Your existing health check and other endpoints...
+
 
 @app.get("/health")
 async def health_check():

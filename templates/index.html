@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChainFLY Solar & Futures API</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+        }
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        h2 {
+            color: #34495e;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            margin-top: 30px;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #2c3e50;
+        }
+        input {
+            padding: 10px;
+            border: 2px solid #bdc3c7;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        input:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        button {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin: 20px auto;
+            display: block;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+        }
+        button:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        #results {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 500px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            margin-top: 20px;
+        }
+        .loading {
+            text-align: center;
+            color: #3498db;
+            font-weight: bold;
+        }
+        .error {
+            background: #e74c3c;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .success {
+            background: #27ae60;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .api-links {
+            text-align: center;
+            margin-top: 30px;
+        }
+        .api-links a {
+            color: #3498db;
+            text-decoration: none;
+            margin: 0 15px;
+            font-weight: bold;
+        }
+        .api-links a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌞⚡ ChainFLY Solar & Futures API</h1>
+        
+        <form id="futuresForm">
+            <h2>☀️ Solar System Parameters</h2>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Latitude (degrees):</label>
+                    <input type="number" step="0.0001" name="latitude" value="28.6139" required>
+                </div>
+                <div class="form-group">
+                    <label>Longitude (degrees):</label>
+                    <input type="number" step="0.0001" name="longitude" value="77.2090" required>
+                </div>
+                <div class="form-group">
+                    <label>System Capacity (kW):</label>
+                    <input type="number" step="0.1" name="system_capacity_kw" value="1000" required>
+                </div>
+                <div class="form-group">
+                    <label>Module Type (0=Standard, 1=Premium, 2=Thin):</label>
+                    <input type="number" name="module_type" value="1" min="0" max="2" required>
+                </div>
+                <div class="form-group">
+                    <label>Array Type (0=Fixed, 1=Roof, 2=1-axis, 3=Backtrack, 4=2-axis):</label>
+                    <input type="number" name="array_type" value="1" min="0" max="4" required>
+                </div>
+                <div class="form-group">
+                    <label>Tilt Angle (0-90 degrees):</label>
+                    <input type="number" name="tilt" value="20" min="0" max="90" required>
+                </div>
+                <div class="form-group">
+                    <label>Azimuth (0-360 degrees, 180=South):</label>
+                    <input type="number" name="azimuth" value="180" min="0" max="360" required>
+                </div>
+                <div class="form-group">
+                    <label>System Losses (%):</label>
+                    <input type="number" name="losses" value="14" min="-5" max="99" required>
+                </div>
+            </div>
+
+            <h2>🔬 Advanced Parameters</h2>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Bifaciality Factor (0-1, leave empty for monofacial):</label>
+                    <input type="number" step="0.01" name="bifaciality" placeholder="e.g., 0.8" min="0" max="1">
+                </div>
+                <div class="form-group">
+                    <label>Ground Albedo (0-1, leave empty for default):</label>
+                    <input type="number" step="0.01" name="albedo" placeholder="e.g., 0.7" min="0" max="1">
+                </div>
+                <div class="form-group">
+                    <label>DC/AC Ratio:</label>
+                    <input type="number" step="0.01" name="dc_ac_ratio" value="1.2" min="0.1" max="3">
+                </div>
+                <div class="form-group">
+                    <label>Ground Coverage Ratio:</label>
+                    <input type="number" step="0.01" name="gcr" value="0.4" min="0.01" max="0.99">
+                </div>
+            </div>
+
+            <h2>💹 Market Parameters</h2>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Price Volatility (0-2):</label>
+                    <input type="number" step="0.01" name="price_volatility" value="0.3" min="0" max="2" required>
+                </div>
+                <div class="form-group">
+                    <label>Mean Reversion Speed:</label>
+                    <input type="number" step="0.01" name="mean_reversion_speed" value="2.0" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label>Contract Months (1-24):</label>
+                    <input type="number" name="contract_months" value="12" min="1" max="24" required>
+                </div>
+                <div class="form-group">
+                    <label>Monte Carlo Paths:</label>
+                    <input type="number" name="monte_carlo_paths" value="10000" min="1000" max="100000" required>
+                </div>
+            </div>
+
+            <button type="submit" id="submitBtn">🚀 Calculate Electricity Futures</button>
+        </form>
+
+        <div id="status"></div>
+        <div id="results"></div>
+
+        <div class="api-links">
+            <h2>🔗 API Resources</h2>
+            <a href="/docs" target="_blank">📚 API Documentation</a>
+            <a href="/health" target="_blank">💚 Health Check</a>
+            <a href="/futures/current-price" target="_blank">💰 Current Prices</a>
+            <a href="/api-summary" target="_blank">📋 API Summary</a>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('futuresForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const statusDiv = document.getElementById('status');
+            const resultsDiv = document.getElementById('results');
+            
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.textContent = '⏳ Calculating...';
+            statusDiv.innerHTML = '<div class="loading">🔄 Processing your request...</div>';
+            resultsDiv.textContent = '';
+            
+            try {
+                const formData = new FormData(event.target);
+                const data = {};
+                
+                formData.forEach((value, key) => {
+                    if (value === '' || value === null) {
+                        data[key] = null;
+                    } else if (!isNaN(value) && value !== '') {
+                        data[key] = Number(value);
+                    } else {
+                        data[key] = value;
+                    }
+                });
+
+                console.log('Sending data:', data);
+
+                const response = await fetch('/futures/electricity', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                
+                // Show success
+                statusDiv.innerHTML = '<div class="success">✅ Calculation completed successfully!</div>';
+                
+                // Format and display results
+                const formattedResult = formatResults(result);
+                resultsDiv.textContent = formattedResult;
+
+            } catch (error) {
+                console.error('Error:', error);
+                statusDiv.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+                resultsDiv.textContent = '';
+            } finally {
+                // Reset button
+                submitBtn.disabled = false;
+                submitBtn.textContent = '🚀 Calculate Electricity Futures';
+            }
+        });
+
+        function formatResults(data) {
+            return `
+🌞 SOLAR GENERATION SUMMARY
+═══════════════════════════
+Annual Generation: ${data.annual_generation_mwh.toFixed(2)} MWh
+Capacity Factor: ${data.capacity_factor.toFixed(2)}%
+
+💰 PORTFOLIO METRICS
+═══════════════════
+Total Portfolio Value: $${data.total_portfolio_value.toLocaleString()}
+Portfolio Volatility: $${data.portfolio_volatility.toLocaleString()}
+Sharpe Ratio: ${data.sharpe_ratio.toFixed(3)}
+95% Value at Risk: $${data.value_at_risk_95.toLocaleString()}
+
+📊 MONTHLY GENERATION (MWh)
+═══════════════════════════
+${data.monthly_solar_output_mwh.map((val, i) => 
+    `${['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][i]}: ${val.toFixed(2)}`
+).join('\n')}
+
+📈 FUTURES CONTRACTS
+═══════════════════
+${data.futures_contracts.map(contract => 
+    `${contract.contract_symbol}: $${contract.futures_price.toFixed(2)}/MWh (${contract.underlying_generation_mwh.toFixed(2)} MWh)`
+).join('\n')}
+
+🔧 MODEL PARAMETERS
+═══════════════════
+${JSON.stringify(data.model_parameters, null, 2)}
+
+⏰ Calculated at: ${new Date(data.pricing_timestamp).toLocaleString()}
+            `;
+        }
+    </script>
+</body>
+</html>
