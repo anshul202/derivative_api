@@ -18,6 +18,78 @@ from models.solar_models import SolarSystemRequest
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/futures", tags=["Electricity Futures"])
 
+from fastapi.responses import StreamingResponse
+import io
+import csv
+
+# Add this new endpoint to your existing futures router
+@router.post("/electricity-csv")
+async def export_futures_csv(request: ElectricityFuturesRequest):
+    """Export futures results as CSV file for financial analysis"""
+    try:
+        # Get the futures data using existing function
+        background_tasks = BackgroundTasks()
+        result = await create_electricity_futures(request, background_tasks)
+        
+        # Create CSV content in memory
+        output = io.StringIO()
+        writer = csv.writer(output)
+        
+        # Write headers
+        writer.writerow([
+            "Contract Symbol", "Delivery Month", "Generation (MWh)", 
+            "Futures Price ($/MWh)", "Expected Revenue ($)", "Price Volatility", "Delta"
+        ])
+        
+        # Write contract data
+        for contract in result.futures_contracts:
+            writer.writerow([
+                contract.contract_symbol,
+                contract.delivery_month,
+                round(contract.underlying_generation_mwh, 2),
+                round(contract.futures_price, 2),
+                round(contract.expected_revenue, 2),
+                round(contract.price_volatility, 4),
+                round(contract.delta, 4)
+            ])
+        
+        # Add portfolio summary section
+        writer.writerow([])  # Empty row
+        writer.writerow(["PORTFOLIO SUMMARY"])
+        writer.writerow(["Metric", "Value"])
+        writer.writerow(["Total Portfolio Value ($)", f"{result.total_portfolio_value:,.2f}"])
+        writer.writerow(["Annual Generation (MWh)", f"{result.annual_generation_mwh:.2f}"])
+        writer.writerow(["Capacity Factor (%)", f"{result.capacity_factor:.2f}"])
+        writer.writerow(["Portfolio Volatility ($)", f"{result.portfolio_volatility:,.2f}"])
+        writer.writerow(["Sharpe Ratio", f"{result.sharpe_ratio:.4f}"])
+        writer.writerow(["95% Value at Risk ($)", f"{result.value_at_risk_95:,.2f}"])
+        writer.writerow(["95% Expected Shortfall ($)", f"{result.expected_shortfall_95:,.2f}"])
+        
+        # Add model parameters section
+        writer.writerow([])
+        writer.writerow(["MODEL PARAMETERS"])
+        writer.writerow(["Parameter", "Value"])
+        for key, value in result.model_parameters.items():
+            writer.writerow([key.replace('_', ' ').title(), str(value)])
+        
+        # Convert to bytes for download
+        output.seek(0)
+        csv_content = output.getvalue()
+        
+        return StreamingResponse(
+            io.BytesIO(csv_content.encode('utf-8')),
+            media_type="text/csv",
+            headers={
+                "Content-Disposition": "attachment; filename=solar_futures_analysis.csv"
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"CSV export failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"CSV export failed: {str(e)}")
+    
+
+
 @router.post("/electricity", response_model=ElectricityFuturesResponse)
 async def create_electricity_futures(
     request: ElectricityFuturesRequest,
