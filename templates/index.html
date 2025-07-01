@@ -1,868 +1,637 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ChainFLY Solar & Futures API</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-      body {
-        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        min-height: 100vh;
-        padding: 20px;
-      }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
 
-      .container {
-        max-width: 1400px;
-        margin: 0 auto;
-        background: rgba(255, 255, 255, 0.95);
-        border-radius: 20px;
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-        overflow: hidden;
-      }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
 
-      .header {
-        background: linear-gradient(45deg, #2c3e50, #3498db);
-        color: white;
-        padding: 30px;
-        text-align: center;
-      }
+        .header {
+            background: linear-gradient(45deg, #2c3e50, #3498db);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+        }
 
-      .header h1 {
-        font-size: 2.5em;
-        margin-bottom: 10px;
-      }
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
 
-      .header p {
-        font-size: 1.2em;
-        opacity: 0.9;
-      }
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
 
-      .nav-tabs {
-        display: flex;
-        background: #f8f9fa;
-        border-bottom: 1px solid #dee2e6;
-      }
+        /* ✅ DEMO DISCLAIMER */
+        .demo-notice {
+            background: rgba(231, 76, 60, 0.9);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 14px;
+            font-weight: bold;
+            border-left: 4px solid #c0392b;
+        }
 
-      .nav-tab {
-        flex: 1;
-        padding: 15px;
-        text-align: center;
-        background: none;
-        border: none;
-        cursor: pointer;
-        font-size: 16px;
-        transition: all 0.3s;
-      }
+        .nav-tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
 
-      .nav-tab.active {
-        background: white;
-        border-bottom: 3px solid #3498db;
-        color: #3498db;
-      }
+        .nav-tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
 
-      .tab-content {
-        display: none;
-        padding: 30px;
-      }
+        .nav-tab.active {
+            background: white;
+            border-bottom: 3px solid #3498db;
+            color: #3498db;
+        }
 
-      .tab-content.active {
-        display: block;
-      }
+        .tab-content {
+            display: none;
+            padding: 30px;
+        }
 
-      .form-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 30px;
-        margin-bottom: 30px;
-      }
+        .tab-content.active {
+            display: block;
+        }
 
-      .form-section {
-        background: #f8f9fa;
-        padding: 25px;
-        border-radius: 15px;
-        border-left: 5px solid #3498db;
-      }
+        /* ✅ PRELOADED TEST CASES */
+        .test-cases {
+            background: #e8f5e8;
+            border: 2px solid #27ae60;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
 
-      .form-section h3 {
-        color: #2c3e50;
-        margin-bottom: 20px;
-        font-size: 1.3em;
-      }
+        .test-cases h4 {
+            color: #27ae60;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
 
-      .form-group {
-        margin-bottom: 20px;
-        position: relative;
-      }
+        .test-case-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
 
-      .form-group label {
-        display: block;
-        margin-bottom: 8px;
-        font-weight: 600;
-        color: #2c3e50;
-        position: relative;
-      }
+        .test-case-btn {
+            background: linear-gradient(45deg, #27ae60, #2ecc71);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
 
-      /* ✅ TOOLTIP STYLES */
-      .tooltip-icon {
-        display: inline-block;
-        width: 16px;
-        height: 16px;
-        background: #3498db;
-        color: white;
-        border-radius: 50%;
-        text-align: center;
-        font-size: 12px;
-        line-height: 16px;
-        margin-left: 5px;
-        cursor: help;
-        position: relative;
-      }
+        .test-case-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
 
-      .tooltip {
-        position: absolute;
-        bottom: 125%;
-        left: 50%;
-        transform: translateX(-50%);
-        background: #2c3e50;
-        color: white;
-        padding: 8px 12px;
-        border-radius: 6px;
-        font-size: 12px;
-        white-space: nowrap;
-        opacity: 0;
-        visibility: hidden;
-        transition: all 0.3s;
-        z-index: 1000;
-        max-width: 300px;
-        white-space: normal;
-      }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
 
-      .tooltip::after {
-        content: "";
-        position: absolute;
-        top: 100%;
-        left: 50%;
-        transform: translateX(-50%);
-        border: 5px solid transparent;
-        border-top-color: #2c3e50;
-      }
+        .form-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            border-left: 5px solid #3498db;
+        }
 
-      .tooltip-icon:hover .tooltip {
-        opacity: 1;
-        visibility: visible;
-      }
+        .form-section h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+        }
 
-      .form-group input,
-      .form-group select {
-        width: 100%;
-        padding: 12px;
-        border: 2px solid #e0e0e0;
-        border-radius: 8px;
-        font-size: 16px;
-        transition: border-color 0.3s;
-      }
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
 
-      .form-group input:focus,
-      .form-group select:focus {
-        outline: none;
-        border-color: #3498db;
-      }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+            position: relative;
+        }
 
-      .btn {
-        background: linear-gradient(45deg, #3498db, #2980b9);
-        color: white;
-        border: none;
-        padding: 15px 30px;
-        border-radius: 10px;
-        font-size: 18px;
-        cursor: pointer;
-        transition: all 0.3s;
-        margin: 10px;
-      }
+        /* ✅ ENHANCED TOOLTIP STYLES */
+        .tooltip-icon {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            background: #3498db;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            font-size: 12px;
+            line-height: 16px;
+            margin-left: 5px;
+            cursor: help;
+            position: relative;
+        }
 
-      .btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-      }
+        .tooltip {
+            position: absolute;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #2c3e50;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 13px;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+            z-index: 1000;
+            max-width: 350px;
+            white-space: normal;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
 
-      .btn-secondary {
-        background: linear-gradient(45deg, #27ae60, #2ecc71);
-      }
+        .tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 6px solid transparent;
+            border-top-color: #2c3e50;
+        }
 
-      .btn-export {
-        background: linear-gradient(45deg, #e74c3c, #c0392b);
-      }
+        .tooltip-icon:hover .tooltip {
+            opacity: 1;
+            visibility: visible;
+        }
 
-      /* ✅ CHARTS AND TABLES STYLES */
-      .results-section {
-        margin-top: 30px;
-        display: none;
-      }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
 
-      .results-section.show {
-        display: block;
-      }
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #3498db;
+        }
 
-      .charts-container {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-        gap: 30px;
-        margin-bottom: 30px;
-      }
+        .btn {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 10px;
+            position: relative;
+        }
 
-      .chart-container {
-        background: white;
-        padding: 20px;
-        border-radius: 15px;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-      }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
 
-      .chart-container h4 {
-        text-align: center;
-        margin-bottom: 15px;
-        color: #2c3e50;
-      }
+        .btn-secondary {
+            background: linear-gradient(45deg, #27ae60, #2ecc71);
+        }
 
-      .table-container {
-        background: white;
-        border-radius: 15px;
-        overflow: hidden;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        margin-bottom: 30px;
-      }
+        .btn-export {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+        }
 
-      .table-container table {
-        width: 100%;
-        border-collapse: collapse;
-      }
+        /* ✅ ENHANCED FINANCIAL TERMINOLOGY */
+        .financial-note {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #856404;
+        }
 
-      .table-container th {
-        background: #3498db;
-        color: white;
-        padding: 15px;
-        text-align: left;
-      }
+        /* ✅ RESULTS SECTION WITH ENHANCED CHARTS */
+        .results-section {
+            margin-top: 30px;
+            display: none;
+        }
 
-      .table-container td {
-        padding: 12px 15px;
-        border-bottom: 1px solid #eee;
-      }
+        .results-section.show {
+            display: block;
+        }
 
-      .table-container tr:nth-child(even) {
-        background: #f8f9fa;
-      }
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
 
-      .loading {
-        text-align: center;
-        padding: 50px;
-        font-size: 18px;
-        color: #666;
-      }
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
 
-      .error {
-        background: #e74c3c;
-        color: white;
-        padding: 15px;
-        border-radius: 10px;
-        margin: 20px 0;
-      }
+        .chart-container h4 {
+            text-align: center;
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
 
-      .api-links {
-        background: #f8f9fa;
-        padding: 20px;
-        border-radius: 10px;
-        margin-top: 20px;
-      }
+        /* ✅ PAYOFF GRAPH SPECIFIC STYLING */
+        .payoff-container {
+            background: #f8f9fa;
+            border: 2px solid #3498db;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
 
-      .api-links h4 {
-        margin-bottom: 15px;
-        color: #2c3e50;
-      }
+        .payoff-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
 
-      .api-links a {
-        display: inline-block;
-        margin: 5px 10px 5px 0;
-        padding: 8px 15px;
-        background: #3498db;
-        color: white;
-        text-decoration: none;
-        border-radius: 5px;
-        transition: background 0.3s;
-      }
+        .payoff-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
 
-      .api-links a:hover {
-        background: #2980b9;
-      }
+        .payoff-btn.active {
+            background: #3498db;
+            color: white;
+        }
 
-      .endpoint-section {
-        background: white;
-        padding: 25px;
-        border-radius: 15px;
-        margin-bottom: 20px;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-      }
+        .payoff-btn:not(.active) {
+            background: #ecf0f1;
+            color: #2c3e50;
+        }
 
-      .endpoint-section h4 {
-        color: #2c3e50;
-        margin-bottom: 15px;
-      }
+        .table-container {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
 
-      .endpoint-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 15px;
-      }
+        .table-container table {
+            width: 100%;
+            border-collapse: collapse;
+        }
 
-      .endpoint-card {
-        background: #f8f9fa;
-        padding: 15px;
-        border-radius: 10px;
-        border-left: 4px solid #3498db;
-      }
+        .table-container th {
+            background: #3498db;
+            color: white;
+            padding: 15px;
+            text-align: left;
+        }
 
-      .endpoint-card h5 {
-        margin-bottom: 8px;
-        color: #2c3e50;
-      }
+        .table-container td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+        }
 
-      .endpoint-card p {
-        font-size: 14px;
-        color: #666;
-        margin-bottom: 10px;
-      }
+        .table-container tr:nth-child(even) {
+            background: #f8f9fa;
+        }
 
-      .endpoint-card button {
-        background: #3498db;
-        color: white;
-        border: none;
-        padding: 8px 15px;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 14px;
-      }
+        .loading {
+            text-align: center;
+            padding: 50px;
+            font-size: 18px;
+            color: #666;
+        }
 
-      .response-display {
-        background: #2c3e50;
-        color: #ecf0f1;
-        padding: 15px;
-        border-radius: 8px;
-        margin-top: 10px;
-        font-family: "Courier New", monospace;
-        font-size: 12px;
-        max-height: 300px;
-        overflow-y: auto;
-        display: none;
-      }
+        .error {
+            background: #e74c3c;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .api-links {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .api-links h4 {
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+
+        .api-links a {
+            display: inline-block;
+            margin: 5px 10px 5px 0;
+            padding: 8px 15px;
+            background: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+
+        .api-links a:hover {
+            background: #2980b9;
+        }
+
+        .endpoint-section {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .endpoint-section h4 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+
+        .endpoint-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .endpoint-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #3498db;
+        }
+
+        .endpoint-card h5 {
+            margin-bottom: 8px;
+            color: #2c3e50;
+        }
+
+        .endpoint-card p {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .endpoint-card button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .response-display {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+        }
     </style>
-  </head>
-  <body>
+</head>
+<body>
     <div class="container">
-      <div class="header">
-        <h1>🌞⚡💰 ChainFLY Solar & Futures API</h1>
-        <p>
-          Advanced Solar Energy Analysis & Electricity Futures Pricing Platform
-        </p>
-      </div>
-
-      <div class="nav-tabs">
-        <button class="nav-tab active" onclick="showTab('futures')">
-          🔮 Futures Calculator
-        </button>
-        <button class="nav-tab" onclick="showTab('solar')">
-          ☀️ Solar Analysis
-        </button>
-        <button class="nav-tab" onclick="showTab('api')">
-          🔧 API Explorer
-        </button>
-        <button class="nav-tab" onclick="showTab('docs')">
-          📚 Documentation
-        </button>
-      </div>
-
-      <!-- ✅ FUTURES TAB -->
-      <div id="futures" class="tab-content active">
-        <form id="futuresForm">
-          <div class="form-grid">
-            <div class="form-section">
-              <h3>📍 Location & System</h3>
-              <div class="form-group">
-                <label
-                  >Latitude:
-                  <span class="tooltip-icon"
-                    >?
-                    <span class="tooltip"
-                      >Geographic latitude in decimal degrees. Affects solar
-                      irradiance and seasonal patterns.</span
-                    >
-                  </span>
-                </label>
-                <input
-                  type="number"
-                  name="latitude"
-                  value="28.6139"
-                  step="0.0001"
-                  required
-                />
-              </div>
-              <div class="form-group">
-                <label
-                  >Longitude:
-                  <span class="tooltip-icon"
-                    >?
-                    <span class="tooltip"
-                      >Geographic longitude in decimal degrees. Determines time
-                      zone and weather patterns.</span
-                    >
-                  </span>
-                </label>
-                <input
-                  type="number"
-                  name="longitude"
-                  value="77.2090"
-                  step="0.0001"
-                  required
-                />
-              </div>
-              <div class="form-group">
-                <label>System Capacity (kW):</label>
-                <input
-                  type="number"
-                  name="system_capacity_kw"
-                  value="1000"
-                  step="0.1"
-                  required
-                />
-              </div>
+        <div class="header">
+            <h1>🌞⚡💰 ChainFLY Solar & Futures API</h1>
+            <p>Advanced Solar Energy Analysis & Electricity Futures Pricing Platform</p>
+            
+            <!-- ✅ DEMO DISCLAIMER -->
+            <div class="demo-notice">
+                ⚠️ This version runs on synthetic data for demo purposes only. Not for actual trading decisions.
             </div>
-
-            <div class="form-section">
-              <h3>🔧 Advanced Parameters</h3>
-              <div class="form-group">
-                <label
-                  >Bifaciality Factor (0-1):
-                  <span class="tooltip-icon"
-                    >?
-                    <span class="tooltip"
-                      >Ratio of rear-side to front-side efficiency. Typical
-                      range: 0.6-0.9. Higher values capture more reflected
-                      light.</span
-                    >
-                  </span>
-                </label>
-                <input
-                  type="number"
-                  name="bifaciality"
-                  step="0.01"
-                  min="0"
-                  max="1"
-                  placeholder="Leave empty for monofacial"
-                />
-              </div>
-              <div class="form-group">
-                <label
-                  >Ground Albedo (0-1):
-                  <span class="tooltip-icon"
-                    >?
-                    <span class="tooltip"
-                      >Ground reflectance factor. Grass: 0.2, Concrete: 0.3,
-                      White gravel: 0.7, Snow: 0.8-0.9</span
-                    >
-                  </span>
-                </label>
-                <input
-                  type="number"
-                  name="albedo"
-                  step="0.01"
-                  min="0"
-                  max="1"
-                  placeholder="Leave empty for default"
-                />
-              </div>
-              <div class="form-group">
-                <label
-                  >Tilt Angle (degrees):
-                  <span class="tooltip-icon"
-                    >?
-                    <span class="tooltip"
-                      >Panel tilt from horizontal. Optimal tilt ≈ latitude for
-                      fixed systems. 0° = flat, 90° = vertical</span
-                    >
-                  </span>
-                </label>
-                <input type="number" name="tilt" value="20" min="0" max="90" />
-              </div>
-            </div>
-
-            <div class="form-section">
-              <h3>💹 Market Parameters</h3>
-              <div class="form-group">
-                <label
-                  >Price Volatility (0-2):
-                  <span class="tooltip-icon"
-                    >?
-                    <span class="tooltip"
-                      >Annual electricity price volatility. Typical range:
-                      0.2-0.4. Higher values = more price uncertainty</span
-                    >
-                  </span>
-                </label>
-                <input
-                  type="number"
-                  name="price_volatility"
-                  value="0.25"
-                  step="0.01"
-                  min="0"
-                  max="2"
-                />
-              </div>
-              <div class="form-group">
-                <label
-                  >Mean Reversion Speed:
-                  <span class="tooltip-icon"
-                    >?
-                    <span class="tooltip"
-                      >How quickly prices return to long-term average. Higher
-                      values = faster reversion to mean</span
-                    >
-                  </span>
-                </label>
-                <input
-                  type="number"
-                  name="mean_reversion_speed"
-                  value="1.5"
-                  step="0.1"
-                  min="0"
-                />
-              </div>
-              <div class="form-group">
-                <label
-                  >Monte Carlo Paths:
-                  <span class="tooltip-icon"
-                    >?
-                    <span class="tooltip"
-                      >Number of price simulations. More paths = higher accuracy
-                      but slower calculation. Recommended: 10,000+</span
-                    >
-                  </span>
-                </label>
-                <input
-                  type="number"
-                  name="monte_carlo_paths"
-                  value="10000"
-                  min="1000"
-                  max="100000"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div style="text-align: center">
-            <button type="submit" class="btn">🔮 Calculate Futures</button>
-            <button
-              type="button"
-              class="btn btn-secondary"
-              onclick="exportCSV()"
-            >
-              📊 Export CSV
-            </button>
-            <button
-              type="button"
-              class="btn btn-export"
-              onclick="clearResults()"
-            >
-              🗑️ Clear Results
-            </button>
-          </div>
-        </form>
-
-        <!-- ✅ RESULTS SECTION WITH CHARTS -->
-        <div id="resultsSection" class="results-section">
-          <h3>📊 Analysis Results</h3>
-
-          <div class="charts-container">
-            <div class="chart-container">
-              <h4>Monthly Solar Generation</h4>
-              <canvas id="generationChart"></canvas>
-            </div>
-            <div class="chart-container">
-              <h4>Futures Prices by Month</h4>
-              <canvas id="pricesChart"></canvas>
-            </div>
-            <div class="chart-container">
-              <h4>Expected Revenue Distribution</h4>
-              <canvas id="revenueChart"></canvas>
-            </div>
-            <div class="chart-container">
-              <h4>Portfolio Risk Metrics</h4>
-              <canvas id="riskChart"></canvas>
-            </div>
-          </div>
-
-          <div class="table-container">
-            <table id="contractsTable">
-              <thead>
-                <tr>
-                  <th>Contract</th>
-                  <th>Month</th>
-                  <th>Generation (MWh)</th>
-                  <th>Futures Price ($/MWh)</th>
-                  <th>Expected Revenue ($)</th>
-                  <th>Delta</th>
-                </tr>
-              </thead>
-              <tbody id="contractsTableBody"></tbody>
-            </table>
-          </div>
-
-          <div id="portfolioSummary" class="form-section">
-            <h3>📈 Portfolio Summary</h3>
-            <div id="summaryContent"></div>
-          </div>
         </div>
-      </div>
 
-      <!-- ✅ SOLAR ANALYSIS TAB -->
-      <div id="solar" class="tab-content">
-        <div class="endpoint-section">
-          <h4>☀️ Solar Output Analysis</h4>
-          <form id="solarForm">
-            <div class="form-grid">
-              <div class="form-section">
-                <h3>System Configuration</h3>
-                <div class="form-group">
-                  <label>Latitude:</label>
-                  <input
-                    type="number"
-                    name="latitude"
-                    value="37.7749"
-                    step="0.0001"
-                    required
-                  />
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showTab('futures')">🔮 Futures Calculator</button>
+            <button class="nav-tab" onclick="showTab('solar')">☀️ Solar Analysis</button>
+            <button class="nav-tab" onclick="showTab('api')">🔧 API Explorer</button>
+            <button class="nav-tab" onclick="showTab('docs')">📚 Documentation</button>
+        </div>
+
+        <!-- ✅ FUTURES TAB WITH PRELOADED CASES -->
+        <div id="futures" class="tab-content active">
+            <!-- ✅ PRELOADED TEST CASES -->
+            <div class="test-cases">
+                <h4>🚀 Quick Start - Preloaded Test Cases</h4>
+                <div class="test-case-grid">
+                    <button class="test-case-btn" onclick="loadTestCase('delhi')">
+                        🏢 Delhi Rooftop – 1MW<br>
+                        <small>Commercial bifacial system</small>
+                    </button>
+                    <button class="test-case-btn" onclick="loadTestCase('sf')">
+                        🏠 San Francisco – 5kW<br>
+                        <small>Residential standard system</small>
+                    </button>
+                    <button class="test-case-btn" onclick="loadTestCase('utility')">
+                        ⚡ Arizona Utility – 100MW<br>
+                        <small>Large-scale solar farm</small>
+                    </button>
+                    <button class="test-case-btn" onclick="loadTestCase('offshore')">
+                        🌊 Floating Solar – 10MW<br>
+                        <small>High albedo water surface</small>
+                    </button>
                 </div>
-                <div class="form-group">
-                  <label>Longitude:</label>
-                  <input
-                    type="number"
-                    name="longitude"
-                    value="-122.4194"
-                    step="0.0001"
-                    required
-                  />
+            </div>
+
+            <!-- ✅ FINANCIAL TERMINOLOGY NOTE -->
+            <div class="financial-note">
+                <strong>📈 Financial Terms:</strong> This platform calculates mark-to-market values for solar electricity futures. 
+                View expected payoffs at expiry, premium vs payoff ratios, and position-level P&L for long/short strategies.
+            </div>
+
+            <form id="futuresForm">
+                <div class="form-grid">
+                    <div class="form-section">
+                        <h3>📍 Location & System</h3>
+                        <div class="form-group">
+                            <label>Latitude:
+                                <span class="tooltip-icon">?
+                                    <span class="tooltip">Geographic latitude in decimal degrees. Critical for solar irradiance calculations and seasonal generation patterns. Range: -89.9 to 89.9</span>
+                                </span>
+                            </label>
+                            <input type="number" name="latitude" value="28.6139" step="0.0001" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Longitude:
+                                <span class="tooltip-icon">?
+                                    <span class="tooltip">Geographic longitude in decimal degrees. Affects time zone calculations and regional weather patterns. Range: -179.9 to 179.9</span>
+                                </span>
+                            </label>
+                            <input type="number" name="longitude" value="77.2090" step="0.0001" required>
+                        </div>
+                        <div class="form-group">
+                            <label>System Capacity (kW):
+                                <span class="tooltip-icon">?
+                                    <span class="tooltip">Total DC capacity of the solar system. Determines contract size for futures pricing. Typical ranges: Residential: 3-10kW, Commercial: 50-1000kW, Utility: 1MW+</span>
+                                </span>
+                            </label>
+                            <input type="number" name="system_capacity_kw" value="1000" step="0.1" required>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>🔧 Advanced Technology Parameters</h3>
+                        <div class="form-group">
+                            <label>Bifaciality Factor (0-1):
+                                <span class="tooltip-icon">?
+                                    <span class="tooltip">Ratio of rear-side to front-side module efficiency. Bifacial modules can capture reflected light. Typical values: Mono PERC bifacial: 0.65-0.75, Heterojunction: 0.85-0.95. Higher albedo surfaces increase bifacial gain significantly.</span>
+                                </span>
+                            </label>
+                            <input type="number" name="bifaciality" step="0.01" min="0" max="1" placeholder="Leave empty for monofacial">
+                        </div>
+                        <div class="form-group">
+                            <label>Ground Albedo (0-1):
+                                <span class="tooltip-icon">?
+                                    <span class="tooltip">Surface reflectance affecting bifacial gain. Values: Grass/soil: 0.15-0.25, Concrete: 0.3-0.4, White gravel: 0.6-0.7, Fresh snow: 0.8-0.9, Water: 0.05-0.15. Critical for bifacial revenue calculations.</span>
+                                </span>
+                            </label>
+                            <input type="number" name="albedo" step="0.01" min="0" max="1" placeholder="Leave empty for default">
+                        </div>
+                        <div class="form-group">
+                            <label>Tilt Angle (degrees):
+                                <span class="tooltip-icon">?
+                                    <span class="tooltip">Panel inclination from horizontal. Optimal fixed tilt ≈ latitude ± 15°. Lower tilts favor summer generation, higher tilts favor winter. 0° = flat, 90° = vertical mount.</span>
+                                </span>
+                            </label>
+                            <input type="number" name="tilt" value="20" min="0" max="90">
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>💹 Market Risk Parameters</h3>
+                        <div class="form-group">
+                            <label>Price Volatility (σ):
+                                <span class="tooltip-icon">?
+                                    <span class="tooltip">Annualized electricity price volatility for stochastic modeling. Affects option premiums and risk metrics. Typical ranges: Stable markets: 0.15-0.25, Volatile markets: 0.3-0.6, Crisis periods: 0.8+</span>
+                                </span>
+                            </label>
+                            <input type="number" name="price_volatility" value="0.25" step="0.01" min="0" max="2">
+                        </div>
+                        <div class="form-group">
+                            <label>Mean Reversion Speed (κ):
+                                <span class="tooltip-icon">?
+                                    <span class="tooltip">Rate at which electricity prices revert to long-term mean. Higher κ = faster mean reversion. Typical values: Competitive markets: 1.5-3.0, Regulated markets: 0.5-1.5. Affects futures curve shape.</span>
+                                </span>
+                            </label>
+                            <input type="number" name="mean_reversion_speed" value="1.5" step="0.1" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Monte Carlo Paths:
+                                <span class="tooltip-icon">?
+                                    <span class="tooltip">Number of price simulations for robust statistical analysis. More paths = higher accuracy but slower calculation. Minimum: 1,000 for basic analysis, Recommended: 10,000+ for risk management, Institutional: 50,000+</span>
+                                </span>
+                            </label>
+                            <input type="number" name="monte_carlo_paths" value="10000" min="1000" max="100000">
+                        </div>
+                    </div>
                 </div>
-                <div class="form-group">
-                  <label>System Capacity (kW):</label>
-                  <input
-                    type="number"
-                    name="system_capacity"
-                    value="5.0"
-                    step="0.1"
-                    required
-                  />
+
+                <div style="text-align: center;">
+                    <button type="submit" class="btn">🔮 Calculate Mark-to-Market & Payoffs</button>
+                    <button type="button" class="btn btn-secondary" onclick="exportCSV()">📊 Export Portfolio Analysis</button>
+                    <button type="button" class="btn btn-export" onclick="clearResults()">🗑️ Clear Results</button>
+                    <div class="financial-note" style="margin-top: 15px; text-align: left;">
+                        <small><strong>Note:</strong> This version uses synthetic market data for demonstration. Results show theoretical mark-to-market values and expected payoffs at contract expiry.</small>
+                    </div>
                 </div>
-              </div>
-            </div>
-            <button type="submit" class="btn">☀️ Analyze Solar Output</button>
-          </form>
-          <div id="solarResults" class="response-display"></div>
-        </div>
-      </div>
+            </form>
 
-      <!-- ✅ API EXPLORER TAB -->
-      <div id="api" class="tab-content">
-        <div class="endpoint-section">
-          <h4>🔧 API Endpoints Explorer</h4>
-          <div class="endpoint-grid">
-            <div class="endpoint-card">
-              <h5>Current Electricity Price</h5>
-              <p>Get live IEX India electricity spot prices</p>
-              <button onclick="testEndpoint('/futures/current-price', 'GET')">
-                Test Endpoint
-              </button>
-              <div class="response-display" id="response-current-price"></div>
-            </div>
-            <div class="endpoint-card">
-              <h5>Market Data</h5>
-              <p>Get futures market specifications and parameters</p>
-              <button onclick="testEndpoint('/futures/market-data', 'GET')">
-                Test Endpoint
-              </button>
-              <div class="response-display" id="response-market-data"></div>
-            </div>
-            <div class="endpoint-card">
-              <h5>Health Check</h5>
-              <p>Check API service status and configuration</p>
-              <button onclick="testEndpoint('/health', 'GET')">
-                Test Endpoint
-              </button>
-              <div class="response-display" id="response-health"></div>
-            </div>
-            <div class="endpoint-card">
-              <h5>API Summary</h5>
-              <p>Get complete API capabilities overview</p>
-              <button onclick="testEndpoint('/api-summary', 'GET')">
-                Test Endpoint
-              </button>
-              <div class="response-display" id="response-api-summary"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ✅ DOCUMENTATION TAB -->
-      <div id="docs" class="tab-content">
-        <div class="endpoint-section">
-          <h4>📚 API Integration Guide</h4>
-          <div class="api-links">
-            <h4>🔗 Quick Links</h4>
-            <a href="/docs" target="_blank">📖 Interactive API Docs</a>
-            <a href="/redoc" target="_blank">📋 Alternative Docs</a>
-            <a href="/health" target="_blank">💚 Health Check</a>
-            <a
-              href="https://github.com/anshul202/derivative_api"
-              target="_blank"
-              >🐙 GitHub Repository</a
-            >
-          </div>
-
-          <div class="form-section">
-            <h3>🚀 Quick Start Guide</h3>
-            <p><strong>Step 1:</strong> Test solar output analysis</p>
-            <pre><code>curl -X POST "/solar/output" -d '{"latitude": 40.7, "longitude": -74.0, "system_capacity": 5.0}'</code></pre>
-
-            <p><strong>Step 2:</strong> Create futures contracts</p>
-            <pre><code>curl -X POST "/futures/electricity" -d '{"latitude": 40.7, "longitude": -74.0, "system_capacity_kw": 5000}'</code></pre>
-
-            <p><strong>Step 3:</strong> Export results for analysis</p>
-            <pre><code>curl -X POST "/futures/electricity-csv" -d '{"latitude": 40.7, "longitude": -74.0, "system_capacity_kw": 5000}'</code></pre>
-          </div>
-
-          <div class="form-section">
-            <h3>💡 Integration Examples</h3>
-            <h4>Python Example:</h4>
-            <pre><code>import requests
-
-# Basic solar analysis
-response = requests.post("https://chainfly-derivative-finance.onrender.com/solar/output", 
-    json={"latitude": 40.7, "longitude": -74.0, "system_capacity": 5.0})
-solar_data = response.json()
-
-# Futures with bifacial enhancement
-response = requests.post("https://chainfly-derivative-finance.onrender.com/futures/electricity",
-    json={
-        "latitude": 40.7, "longitude": -74.0, "system_capacity_kw": 5000,
-        "bifaciality": 0.8, "albedo": 0.7
-    })
-futures_data = response.json()</code></pre>
-
-            <h4>JavaScript Example:</h4>
-            <pre><code>// Solar output analysis
-const solarResponse = await fetch('/solar/output', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({latitude: 40.7, longitude: -74.0, system_capacity: 5.0})
-});
-const solarData = await solarResponse.json();
-
-// Futures pricing
-const futuresResponse = await fetch('/futures/electricity', {
-    method: 'POST', 
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({
-        latitude: 40.7, longitude: -74.0, system_capacity_kw: 5000,
-        bifaciality: 0.8, albedo: 0.7
-    })
-});</code></pre>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <script>
-      // Global variables for charts
-      let generationChart, pricesChart, revenueChart, riskChart;
-
-      // Tab switching
-      function showTab(tabName) {
-        document
-          .querySelectorAll(".tab-content")
-          .forEach((tab) => tab.classList.remove("active"));
-        document
-          .querySelectorAll(".nav-tab")
-          .forEach((tab) => tab.classList.remove("active"));
-
-        document.getElementById(tabName).classList.add("active");
-        event.target.classList.add("active");
-      }
-
-      // ✅ FUTURES FORM HANDLER WITH CHARTS
-      document
-        .getElementById("futuresForm")
-        .addEventListener("submit", async function (e) {
-          e.preventDefault();
-
-          const formData = new FormData(this);
-          const data = {};
-
-          formData.forEach((value, key) => {
-            if (value === "" || value === null) {
-              data[key] = null;
-            } else if (!isNaN(value) && value !== "") {
-              data[key] = Number(value);
-            } else {
-              data[key] = value;
-            }
-          });
-
-          try {
-            document.getElementById("resultsSection").innerHTML =
-              '<div class="loading">🔄 Calculating futures contracts...</div>';
-            document.getElementById("resultsSection").classList.add("show");
-
-            const response = await fetch("/futures/electricity", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(data),
-            });
-
-            if (!response.ok) {
-              throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const result = await response.json();
-            displayResults(result);
-          } catch (error) {
-            document.getElementById(
-              "resultsSection"
-            ).innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
-          }
-        });
-
-      // ✅ DISPLAY RESULTS WITH CHARTS
-      function displayResults(result) {
-        const resultsSection = document.getElementById("resultsSection");
-
-        resultsSection.innerHTML = `
-                <h3>📊 Analysis Results</h3>
+            <!-- ✅ ENHANCED RESULTS SECTION WITH PAYOFF GRAPH -->
+            <div id="resultsSection" class="results-section">
+                <h3>📊 Financial Analysis Results</h3>
+                
+                <!-- ✅ FUTURES PAYOFF GRAPH -->
+                <div class="payoff-container">
+                    <h4>📈 Futures Payoff Distribution</h4>
+                    <div class="payoff-controls">
+                        <button class="payoff-btn active" onclick="updatePayoffChart('long')">Long Position P&L</button>
+                        <button class="payoff-btn" onclick="updatePayoffChart('short')">Short Position P&L</button>
+                        <button class="payoff-btn" onclick="updatePayoffChart('distribution')">Price Distribution</button>
+                    </div>
+                    <canvas id="payoffChart"></canvas>
+                </div>
                 
                 <div class="charts-container">
                     <div class="chart-container">
-                        <h4>Monthly Solar Generation</h4>
+                        <h4>Monthly Solar Generation (MWh)</h4>
                         <canvas id="generationChart"></canvas>
                     </div>
                     <div class="chart-container">
-                        <h4>Futures Prices by Month</h4>
+                        <h4>Mark-to-Market Futures Prices</h4>
                         <canvas id="pricesChart"></canvas>
                     </div>
                     <div class="chart-container">
-                        <h4>Expected Revenue Distribution</h4>
+                        <h4>Expected Payoffs at Expiry</h4>
                         <canvas id="revenueChart"></canvas>
                     </div>
                     <div class="chart-container">
@@ -875,12 +644,631 @@ const futuresResponse = await fetch('/futures/electricity', {
                     <table id="contractsTable">
                         <thead>
                             <tr>
-                                <th>Contract</th>
-                                <th>Month</th>
-                                <th>Generation (MWh)</th>
-                                <th>Futures Price ($/MWh)</th>
-                                <th>Expected Revenue ($)</th>
-                                <th>Delta</th>
+                                <th>Contract Symbol</th>
+                                <th>Delivery Month</th>
+                                <th>Underlying Generation (MWh)</th>
+                                <th>Mark-to-Market ($/MWh)</th>
+                                <th>Expected Payoff at Expiry ($)</th>
+                                <th>Risk Delta</th>
+                            </tr>
+                        </thead>
+                        <tbody id="contractsTableBody">
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="portfolioSummary" class="form-section">
+                    <h3>📈 Portfolio Mark-to-Market Summary</h3>
+                    <div id="summaryContent"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ✅ COMPLETE SOLAR ANALYSIS TAB -->
+        <div id="solar" class="tab-content">
+            <div class="endpoint-section">
+                <h4>☀️ Solar Output Analysis</h4>
+                <form id="solarForm">
+                    <div class="form-grid">
+                        <div class="form-section">
+                            <h3>System Configuration</h3>
+                            <div class="form-group">
+                                <label>Latitude:
+                                    <span class="tooltip-icon">?
+                                        <span class="tooltip">Geographic latitude for solar resource calculation</span>
+                                    </span>
+                                </label>
+                                <input type="number" name="latitude" value="37.7749" step="0.0001" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Longitude:
+                                    <span class="tooltip-icon">?
+                                        <span class="tooltip">Geographic longitude for weather data lookup</span>
+                                    </span>
+                                </label>
+                                <input type="number" name="longitude" value="-122.4194" step="0.0001" required>
+                            </div>
+                            <div class="form-group">
+                                <label>System Capacity (kW):
+                                    <span class="tooltip-icon">?
+                                        <span class="tooltip">Total DC capacity of the solar PV system</span>
+                                    </span>
+                                </label>
+                                <input type="number" name="system_capacity" value="5.0" step="0.1" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Module Type:
+                                    <span class="tooltip-icon">?
+                                        <span class="tooltip">Solar panel technology: 0=Standard, 1=Premium, 2=Thin film</span>
+                                    </span>
+                                </label>
+                                <select name="module_type">
+                                    <option value="0">Standard</option>
+                                    <option value="1" selected>Premium</option>
+                                    <option value="2">Thin Film</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Array Type:
+                                    <span class="tooltip-icon">?
+                                        <span class="tooltip">Mounting configuration affects performance and cost</span>
+                                    </span>
+                                </label>
+                                <select name="array_type">
+                                    <option value="0">Fixed Open Rack</option>
+                                    <option value="1" selected>Fixed Roof Mount</option>
+                                    <option value="2">1-Axis Tracking</option>
+                                    <option value="3">1-Axis Backtracked</option>
+                                    <option value="4">2-Axis Tracking</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-section">
+                            <h3>Advanced Parameters</h3>
+                            <div class="form-group">
+                                <label>Tilt (degrees):
+                                    <span class="tooltip-icon">?
+                                        <span class="tooltip">Panel tilt from horizontal. Optimal ≈ latitude</span>
+                                    </span>
+                                </label>
+                                <input type="number" name="tilt" value="30" min="0" max="90">
+                            </div>
+                            <div class="form-group">
+                                <label>Azimuth (degrees):
+                                    <span class="tooltip-icon">?
+                                        <span class="tooltip">Panel orientation: 180=south, 90=east, 270=west</span>
+                                    </span>
+                                </label>
+                                <input type="number" name="azimuth" value="180" min="0" max="359">
+                            </div>
+                            <div class="form-group">
+                                <label>System Losses (%):
+                                    <span class="tooltip-icon">?
+                                        <span class="tooltip">Total system losses including soiling, wiring, inverter inefficiencies</span>
+                                    </span>
+                                </label>
+                                <input type="number" name="losses" value="14" min="0" max="99">
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn">☀️ Analyze Solar Output</button>
+                </form>
+                <div id="solarResults" class="response-display"></div>
+            </div>
+        </div>
+
+        <!-- ✅ COMPLETE API EXPLORER TAB -->
+        <div id="api" class="tab-content">
+            <div class="endpoint-section">
+                <h4>🔧 API Endpoints Explorer</h4>
+                <div class="endpoint-grid">
+                    <div class="endpoint-card">
+                        <h5>Current Electricity Price</h5>
+                        <p>Get live IEX India electricity spot prices with currency conversion</p>
+                        <button onclick="testEndpoint('/futures/current-price', 'GET', 'current-price')">Test Endpoint</button>
+                        <div class="response-display" id="response-current-price"></div>
+                    </div>
+                    <div class="endpoint-card">
+                        <h5>Market Data</h5>
+                        <p>Get futures market specifications, contract details, and trading parameters</p>
+                        <button onclick="testEndpoint('/futures/market-data', 'GET', 'market-data')">Test Endpoint</button>
+                        <div class="response-display" id="response-market-data"></div>
+                    </div>
+                    <div class="endpoint-card">
+                        <h5>Health Check</h5>
+                        <p>Check API service status, configuration, and operational metrics</p>
+                        <button onclick="testEndpoint('/health', 'GET', 'health')">Test Endpoint</button>
+                        <div class="response-display" id="response-health"></div>
+                    </div>
+                    <div class="endpoint-card">
+                        <h5>API Summary</h5>
+                        <p>Get complete API capabilities overview and integration guide</p>
+                        <button onclick="testEndpoint('/api-summary', 'GET', 'api-summary')">Test Endpoint</button>
+                        <div class="response-display" id="response-api-summary"></div>
+                    </div>
+                    <div class="endpoint-card">
+                        <h5>Solar Quick Estimate</h5>
+                        <p>Fast solar generation estimate with minimal parameters</p>
+                        <button onclick="testSolarQuickEstimate()">Test with Demo Data</button>
+                        <div class="response-display" id="response-solar-quick"></div>
+                    </div>
+                    <div class="endpoint-card">
+                        <h5>Futures Health Check</h5>
+                        <p>Specific health check for futures pricing service</p>
+                        <button onclick="testEndpoint('/futures/health', 'GET', 'futures-health')">Test Endpoint</button>
+                        <div class="response-display" id="response-futures-health"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ✅ COMPLETE DOCUMENTATION TAB -->
+        <div id="docs" class="tab-content">
+            <div class="endpoint-section">
+                <h4>📚 API Integration Guide</h4>
+                <div class="api-links">
+                    <h4>🔗 Quick Access Links</h4>
+                    <a href="/docs" target="_blank">📖 Interactive API Docs (Swagger)</a>
+                    <a href="/redoc" target="_blank">📋 Alternative API Docs (ReDoc)</a>
+                    <a href="/health" target="_blank">💚 System Health Check</a>
+                    <a href="/futures/current-price" target="_blank">💱 Live Electricity Prices</a>
+                    <a href="https://github.com/anshul202/derivative_api" target="_blank">🐙 GitHub Repository</a>
+                    <a href="https://developer.nrel.gov/docs/solar/pvwatts/" target="_blank">🌞 PVWatts Documentation</a>
+                </div>
+
+                <div class="form-section">
+                    <h3>🚀 Quick Start Integration Guide</h3>
+                    <p><strong>Step 1:</strong> Test solar output analysis</p>
+                    <pre><code>curl -X POST "/solar/output" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "latitude": 40.7,
+    "longitude": -74.0,
+    "system_capacity": 5.0,
+    "module_type": 1,
+    "array_type": 1,
+    "tilt": 30,
+    "azimuth": 180,
+    "losses": 14
+  }'</code></pre>
+                    
+                    <p><strong>Step 2:</strong> Create electricity futures contracts</p>
+                    <pre><code>curl -X POST "/futures/electricity" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "latitude": 40.7,
+    "longitude": -74.0,
+    "system_capacity_kw": 5000,
+    "bifaciality": 0.8,
+    "albedo": 0.7,
+    "price_volatility": 0.25,
+    "mean_reversion_speed": 1.5
+  }'</code></pre>
+                    
+                    <p><strong>Step 3:</strong> Export results for financial analysis</p>
+                    <pre><code>curl -X POST "/futures/electricity-csv" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "latitude": 40.7,
+    "longitude": -74.0,
+    "system_capacity_kw": 5000
+  }' \
+  --output solar_futures_analysis.csv</code></pre>
+                </div>
+
+                <div class="form-section">
+                    <h3>💡 Programming Language Examples</h3>
+                    
+                    <h4>Python Implementation:</h4>
+                    <pre><code>import requests
+import pandas as pd
+
+# Solar generation analysis
+def analyze_solar_system(lat, lon, capacity):
+    response = requests.post(
+        "https://chainfly-derivative-finance.onrender.com/solar/output",
+        json={
+            "latitude": lat,
+            "longitude": lon,
+            "system_capacity": capacity,
+            "module_type": 1,
+            "array_type": 1,
+            "tilt": 30,
+            "azimuth": 180,
+            "losses": 14
+        }
+    )
+    return response.json()
+
+# Futures contract pricing with bifacial enhancement
+def price_solar_futures(lat, lon, capacity_kw, bifaciality=None, albedo=None):
+    payload = {
+        "latitude": lat,
+        "longitude": lon,
+        "system_capacity_kw": capacity_kw,
+        "price_volatility": 0.25,
+        "mean_reversion_speed": 1.5,
+        "monte_carlo_paths": 10000
+    }
+    
+    if bifaciality:
+        payload["bifaciality"] = bifaciality
+    if albedo:
+        payload["albedo"] = albedo
+    
+    response = requests.post(
+        "https://chainfly-derivative-finance.onrender.com/futures/electricity",
+        json=payload
+    )
+    return response.json()
+
+# Usage example
+solar_data = analyze_solar_system(37.7749, -122.4194, 5.0)
+futures_data = price_solar_futures(37.7749, -122.4194, 5000, 0.8, 0.7)
+
+print(f"Annual generation: {solar_data['ac_annual']} kWh")
+print(f"Portfolio value: ${futures_data['total_portfolio_value']:,.2f}")
+</code></pre>
+
+                    <h4>JavaScript/Node.js Implementation:</h4>
+                    <pre><code>const axios = require('axios');
+
+// Solar output analysis
+async function analyzeSolarSystem(lat, lon, capacity) {
+    try {
+        const response = await axios.post(
+            'https://chainfly-derivative-finance.onrender.com/solar/output',
+            {
+                latitude: lat,
+                longitude: lon,
+                system_capacity: capacity,
+                module_type: 1,
+                array_type: 1,
+                tilt: 30,
+                azimuth: 180,
+                losses: 14
+            }
+        );
+        return response.data;
+    } catch (error) {
+        console.error('Solar analysis failed:', error.message);
+        throw error;
+    }
+}
+
+// Futures pricing with risk analytics
+async function priceSolarFutures(lat, lon, capacityKw, options = {}) {
+    const payload = {
+        latitude: lat,
+        longitude: lon,
+        system_capacity_kw: capacityKw,
+        price_volatility: options.volatility || 0.25,
+        mean_reversion_speed: options.meanReversion || 1.5,
+        monte_carlo_paths: options.monteCarloPaths || 10000,
+        ...options.bifacial && { bifaciality: options.bifacial.factor },
+        ...options.bifacial && { albedo: options.bifacial.albedo }
+    };
+
+    try {
+        const response = await axios.post(
+            'https://chainfly-derivative-finance.onrender.com/futures/electricity',
+            payload
+        );
+        return response.data;
+    } catch (error) {
+        console.error('Futures pricing failed:', error.message);
+        throw error;
+    }
+}
+
+// Usage example
+(async () => {
+    const solarData = await analyzeSolarSystem(37.7749, -122.4194, 5.0);
+    const futuresData = await priceSolarFutures(37.7749, -122.4194, 5000, {
+        volatility: 0.3,
+        meanReversion: 2.0,
+        bifacial: { factor: 0.8, albedo: 0.7 }
+    });
+    
+    console.log(`Annual generation: ${solarData.ac_annual} kWh`);
+    console.log(`Portfolio value: $${futuresData.total_portfolio_value.toLocaleString()}`);
+    console.log(`Risk (95% VaR): $${futuresData.value_at_risk_95.toLocaleString()}`);
+})();
+</code></pre>
+
+                    <h4>R Programming Implementation:</h4>
+                    <pre><code>library(httr)
+library(jsonlite)
+
+# Solar analysis function
+analyze_solar <- function(lat, lon, capacity) {
+  payload <- list(
+    latitude = lat,
+    longitude = lon,
+    system_capacity = capacity,
+    module_type = 1,
+    array_type = 1,
+    tilt = 30,
+    azimuth = 180,
+    losses = 14
+  )
+  
+  response <- POST(
+    "https://chainfly-derivative-finance.onrender.com/solar/output",
+    body = payload,
+    encode = "json"
+  )
+  
+  return(content(response, "parsed"))
+}
+
+# Futures pricing function
+price_futures <- function(lat, lon, capacity_kw, bifaciality = NULL, albedo = NULL) {
+  payload <- list(
+    latitude = lat,
+    longitude = lon,
+    system_capacity_kw = capacity_kw,
+    price_volatility = 0.25,
+    mean_reversion_speed = 1.5,
+    monte_carlo_paths = 10000
+  )
+  
+  if (!is.null(bifaciality)) payload$bifaciality <- bifaciality
+  if (!is.null(albedo)) payload$albedo <- albedo
+  
+  response <- POST(
+    "https://chainfly-derivative-finance.onrender.com/futures/electricity",
+    body = payload,
+    encode = "json"
+  )
+  
+  return(content(response, "parsed"))
+}
+
+# Usage example
+solar_data <- analyze_solar(37.7749, -122.4194, 5.0)
+futures_data <- price_futures(37.7749, -122.4194, 5000, 0.8, 0.7)
+
+cat("Annual generation:", solar_data$ac_annual, "kWh\n")
+cat("Portfolio value: $", format(futures_data$total_portfolio_value, big.mark = ","), "\n")
+</code></pre>
+                </div>
+
+                <div class="form-section">
+                    <h3>📊 Data Formats & Response Structure</h3>
+                    <h4>Solar Output Response:</h4>
+                    <pre><code>{
+  "ac_monthly": [466, 543, 702, 800, 818, 788, 790, 738, 720, 650, 487, 446],
+  "dc_monthly": [489, 569, 736, 838, 857, 825, 828, 773, 754, 680, 511, 468],
+  "ac_annual": 7948.75,
+  "capacity_factor": 18.15,
+  "station_info": {
+    "lat": 37.77,
+    "lon": -122.42,
+    "city": "",
+    "state": "California",
+    "distance": 551
+  }
+}</code></pre>
+
+                    <h4>Futures Response Structure:</h4>
+                    <pre><code>{
+  "monthly_solar_output_mwh": [93.95, 104.90, 137.70, ...],
+  "annual_generation_mwh": 1622.4,
+  "capacity_factor": 18.15,
+  "futures_contracts": [
+    {
+      "contract_symbol": "SOLAR-JAN25",
+      "delivery_month": "2025-01",
+      "underlying_generation_mwh": 93.95,
+      "futures_price": 78.45,
+      "expected_revenue": 7369.88,
+      "delta": 0.85
+    }
+  ],
+  "total_portfolio_value": 587420.50,
+  "portfolio_volatility": 76543.21,
+  "value_at_risk_95": 467890.23,
+  "model_parameters": {
+    "kappa": 1.5,
+    "sigma": 0.25,
+    "monte_carlo_paths": 10000
+  }
+}</code></pre>
+                </div>
+
+                <div class="form-section">
+                    <h3>⚠️ Error Handling & Best Practices</h3>
+                    <h4>Common Error Codes:</h4>
+                    <ul>
+                        <li><strong>400 Bad Request:</strong> Invalid parameters (check lat/lon ranges, capacity values)</li>
+                        <li><strong>422 Unprocessable Entity:</strong> PVWatts API validation failed (extreme coordinates)</li>
+                        <li><strong>429 Too Many Requests:</strong> Rate limit exceeded (1000 calls/hour for NREL)</li>
+                        <li><strong>500 Internal Server Error:</strong> API service issues (check /health endpoint)</li>
+                    </ul>
+                    
+                    <h4>Best Practices:</h4>
+                    <ul>
+                        <li>Cache results for identical system configurations</li>
+                        <li>Use reasonable coordinate ranges (-89.9 to 89.9 lat, -179.9 to 179.9 lon)</li>
+                        <li>Monitor API response times and implement timeouts</li>
+                        <li>Validate input parameters before API calls</li>
+                        <li>Implement exponential backoff for rate limiting</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables for charts
+        let generationChart, pricesChart, revenueChart, riskChart, payoffChart;
+        let currentResults = null;
+
+        // ✅ PRELOADED TEST CASES (Complete data)
+        const testCases = {
+            delhi: {
+                latitude: 28.6139,
+                longitude: 77.2090,
+                system_capacity_kw: 1000,
+                bifaciality: 0.7,
+                albedo: 0.3,
+                tilt: 25,
+                price_volatility: 0.35,
+                mean_reversion_speed: 2.2,
+                monte_carlo_paths: 10000
+            },
+            sf: {
+                latitude: 37.7749,
+                longitude: -122.4194,
+                system_capacity_kw: 5,
+                bifaciality: null,
+                albedo: null,
+                tilt: 30,
+                price_volatility: 0.25,
+                mean_reversion_speed: 1.8,
+                monte_carlo_paths: 10000
+            },
+            utility: {
+                latitude: 33.4484,
+                longitude: -112.0740,
+                system_capacity_kw: 100000,
+                bifaciality: 0.85,
+                albedo: 0.7,
+                tilt: 25,
+                price_volatility: 0.22,
+                mean_reversion_speed: 1.5,
+                monte_carlo_paths: 15000
+            },
+            offshore: {
+                latitude: 35.6762,
+                longitude: 139.6503,
+                system_capacity_kw: 10000,
+                bifaciality: 0.8,
+                albedo: 0.1,
+                tilt: 10,
+                price_volatility: 0.4,
+                mean_reversion_speed: 2.5,
+                monte_carlo_paths: 12000
+            }
+        };
+
+        // ✅ LOAD TEST CASE FUNCTION
+        function loadTestCase(caseId) {
+            const testCase = testCases[caseId];
+            const form = document.getElementById('futuresForm');
+            
+            Object.keys(testCase).forEach(key => {
+                const input = form.querySelector(`[name="${key}"]`);
+                if (input) {
+                    input.value = testCase[key] || '';
+                }
+            });
+            
+            // Visual feedback
+            const buttons = document.querySelectorAll('.test-case-btn');
+            buttons.forEach(btn => btn.style.transform = 'scale(1)');
+            event.target.style.transform = 'scale(0.95)';
+            setTimeout(() => event.target.style.transform = 'scale(1)', 150);
+        }
+
+        // Tab switching function
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+            
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // ✅ ENHANCED FUTURES FORM HANDLER WITH LOADING STATES
+        document.getElementById('futuresForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const data = {};
+            
+            formData.forEach((value, key) => {
+                if (value === '' || value === null) {
+                    data[key] = null;
+                } else if (!isNaN(value) && value !== '') {
+                    data[key] = Number(value);
+                } else {
+                    data[key] = value;
+                }
+            });
+
+            try {
+                document.getElementById('resultsSection').innerHTML = '<div class="loading">🔄 Calculating mark-to-market values and payoff distributions...</div>';
+                document.getElementById('resultsSection').classList.add('show');
+
+                const response = await fetch('/futures/electricity', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+
+                const result = await response.json();
+                currentResults = result;
+                displayResults(result, data);
+                
+            } catch (error) {
+                console.error('Futures calculation error:', error);
+                document.getElementById('resultsSection').innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+            }
+        });
+
+        // ✅ ENHANCED DISPLAY RESULTS WITH COMPLETE CHARTS
+        function displayResults(result, inputData) {
+            const resultsSection = document.getElementById('resultsSection');
+            
+            resultsSection.innerHTML = `
+                <h3>📊 Financial Analysis Results</h3>
+                
+                <div class="payoff-container">
+                    <h4>📈 Futures Payoff Distribution</h4>
+                    <div class="payoff-controls">
+                        <button class="payoff-btn active" onclick="updatePayoffChart('long')">Long Position P&L</button>
+                        <button class="payoff-btn" onclick="updatePayoffChart('short')">Short Position P&L</button>
+                        <button class="payoff-btn" onclick="updatePayoffChart('distribution')">Price Distribution</button>
+                    </div>
+                    <canvas id="payoffChart"></canvas>
+                </div>
+                
+                <div class="charts-container">
+                    <div class="chart-container">
+                        <h4>Monthly Solar Generation (MWh)</h4>
+                        <canvas id="generationChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h4>Mark-to-Market Futures Prices</h4>
+                        <canvas id="pricesChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h4>Expected Payoffs at Expiry</h4>
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h4>Portfolio Risk Metrics</h4>
+                        <canvas id="riskChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table id="contractsTable">
+                        <thead>
+                            <tr>
+                                <th>Contract Symbol</th>
+                                <th>Delivery Month</th>
+                                <th>Underlying Generation (MWh)</th>
+                                <th>Mark-to-Market ($/MWh)</th>
+                                <th>Expected Payoff at Expiry ($)</th>
+                                <th>Risk Delta</th>
                             </tr>
                         </thead>
                         <tbody id="contractsTableBody"></tbody>
@@ -888,333 +1276,569 @@ const futuresResponse = await fetch('/futures/electricity', {
                 </div>
 
                 <div id="portfolioSummary" class="form-section">
-                    <h3>📈 Portfolio Summary</h3>
+                    <h3>📈 Portfolio Mark-to-Market Summary</h3>
                     <div id="summaryContent"></div>
                 </div>
             `;
 
-        // Create charts
-        createCharts(result);
+            // Create all charts including the new payoff chart
+            createCharts(result, inputData);
+            populateTable(result);
+            showPortfolioSummary(result);
+        }
 
-        // Populate table
-        populateTable(result);
+        // ✅ COMPLETE CHART CREATION WITH ALL 5 CHARTS
+        function createCharts(result, inputData) {
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            
+            // Create payoff chart first
+            createPayoffChart(result, inputData);
+            
+            // Generation Chart
+            const genCtx = document.getElementById('generationChart').getContext('2d');
+            generationChart = new Chart(genCtx, {
+                type: 'bar',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: 'Solar Generation (MWh)',
+                        data: result.monthly_solar_output_mwh,
+                        backgroundColor: 'rgba(52, 152, 219, 0.8)',
+                        borderColor: 'rgba(52, 152, 219, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { beginAtZero: true }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Monthly Solar Generation Profile'
+                        }
+                    }
+                }
+            });
 
-        // Show portfolio summary
-        showPortfolioSummary(result);
-      }
+            // Mark-to-Market Prices Chart
+            const pricesCtx = document.getElementById('pricesChart').getContext('2d');
+            const futuresPrices = result.futures_contracts.map(c => c.futures_price);
+            pricesChart = new Chart(pricesCtx, {
+                type: 'line',
+                data: {
+                    labels: months.slice(0, futuresPrices.length),
+                    datasets: [{
+                        label: 'Mark-to-Market Price ($/MWh)',
+                        data: futuresPrices,
+                        backgroundColor: 'rgba(46, 204, 113, 0.2)',
+                        borderColor: 'rgba(46, 204, 113, 1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { beginAtZero: false }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Futures Price Curve by Delivery Month'
+                        }
+                    }
+                }
+            });
 
-      // ✅ CREATE CHARTS FUNCTION
-      function createCharts(result) {
-        const months = [
-          "Jan",
-          "Feb",
-          "Mar",
-          "Apr",
-          "May",
-          "Jun",
-          "Jul",
-          "Aug",
-          "Sep",
-          "Oct",
-          "Nov",
-          "Dec",
-        ];
+            // Expected Payoffs Chart
+            const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+            const payoffs = result.futures_contracts.map(c => c.expected_revenue);
+            revenueChart = new Chart(revenueCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: months.slice(0, payoffs.length),
+                    datasets: [{
+                        label: 'Expected Payoff ($)',
+                        data: payoffs,
+                        backgroundColor: [
+                            '#3498db', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6',
+                            '#1abc9c', '#34495e', '#e67e22', '#95a5a6', '#f1c40f',
+                            '#8e44ad', '#c0392b'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { 
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 12
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Revenue Distribution by Month'
+                        }
+                    }
+                }
+            });
 
-        // Generation Chart
-        const genCtx = document
-          .getElementById("generationChart")
-          .getContext("2d");
-        generationChart = new Chart(genCtx, {
-          type: "bar",
-          data: {
-            labels: months,
-            datasets: [
-              {
-                label: "Solar Generation (MWh)",
-                data: result.monthly_solar_output_mwh,
-                backgroundColor: "rgba(52, 152, 219, 0.8)",
-                borderColor: "rgba(52, 152, 219, 1)",
-                borderWidth: 1,
-              },
-            ],
-          },
-          options: {
-            responsive: true,
-            scales: {
-              y: { beginAtZero: true },
-            },
-          },
-        });
+            // Risk Chart
+            const riskCtx = document.getElementById('riskChart').getContext('2d');
+            riskChart = new Chart(riskCtx, {
+                type: 'radar',
+                data: {
+                    labels: ['Portfolio Value (M$)', 'Sharpe Ratio (×10)', 'Capacity Factor (%)', 'Risk Score'],
+                    datasets: [{
+                        label: 'Risk Profile',
+                        data: [
+                            result.total_portfolio_value / 1000000,
+                            result.sharpe_ratio * 10,
+                            result.capacity_factor,
+                            (1 - Math.abs(result.correlation_solar_price)) * 100
+                        ],
+                        backgroundColor: 'rgba(155, 89, 182, 0.2)',
+                        borderColor: 'rgba(155, 89, 182, 1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: 'rgba(155, 89, 182, 1)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        r: { 
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Portfolio Risk Assessment'
+                        }
+                    }
+                }
+            });
+        }
 
-        // Prices Chart
-        const pricesCtx = document
-          .getElementById("pricesChart")
-          .getContext("2d");
-        const futuresPrices = result.futures_contracts.map(
-          (c) => c.futures_price
-        );
-        pricesChart = new Chart(pricesCtx, {
-          type: "line",
-          data: {
-            labels: months.slice(0, futuresPrices.length),
-            datasets: [
-              {
-                label: "Futures Price ($/MWh)",
-                data: futuresPrices,
-                backgroundColor: "rgba(46, 204, 113, 0.2)",
-                borderColor: "rgba(46, 204, 113, 1)",
-                borderWidth: 2,
-                fill: true,
-              },
-            ],
-          },
-          options: {
-            responsive: true,
-            scales: {
-              y: { beginAtZero: false },
-            },
-          },
-        });
+        // ✅ ENHANCED PAYOFF CHART CREATION
+        function createPayoffChart(result, inputData) {
+            const ctx = document.getElementById('payoffChart').getContext('2d');
+            
+            // Generate realistic price distribution based on volatility and mean reversion
+            const volatility = inputData.price_volatility || 0.25;
+            const meanPrice = result.futures_contracts.length > 0 ? 
+                result.futures_contracts.reduce((sum, c) => sum + c.futures_price, 0) / result.futures_contracts.length : 50;
+            
+            const priceRange = [];
+            const probabilities = [];
+            const longPayoffs = [];
+            const shortPayoffs = [];
+            
+            // Generate comprehensive price distribution (201 points for smooth curve)
+            for (let i = 0; i <= 200; i++) {
+                const price = meanPrice * (0.3 + i * 0.007); // Price range from 30% to 170% of mean
+                const normalizedPrice = (price - meanPrice) / (meanPrice * volatility);
+                const probability = Math.exp(-0.5 * normalizedPrice * normalizedPrice) / (volatility * Math.sqrt(2 * Math.PI)) * 100;
+                
+                priceRange.push(price);
+                probabilities.push(probability);
+                longPayoffs.push(Math.max(0, (price - meanPrice) * 1000)); // Scaled for visibility
+                shortPayoffs.push(Math.max(0, (meanPrice - price) * 1000)); // Scaled for visibility
+            }
+            
+            payoffChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: priceRange.map(p => p.toFixed(1)),
+                    datasets: [{
+                        label: 'Long Position P&L ($)',
+                        data: longPayoffs,
+                        backgroundColor: 'rgba(46, 204, 113, 0.2)',
+                        borderColor: 'rgba(46, 204, 113, 1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: { 
+                            title: { 
+                                display: true, 
+                                text: 'Electricity Price ($/MWh)' 
+                            },
+                            ticks: {
+                                maxTicksLimit: 10
+                            }
+                        },
+                        y: { 
+                            title: { 
+                                display: true, 
+                                text: 'P&L per MWh ($)' 
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Futures Position Payoff at Expiry'
+                        },
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    }
+                }
+            });
+        }
 
-        // Revenue Chart
-        const revenueCtx = document
-          .getElementById("revenueChart")
-          .getContext("2d");
-        const revenues = result.futures_contracts.map(
-          (c) => c.expected_revenue
-        );
-        revenueChart = new Chart(revenueCtx, {
-          type: "doughnut",
-          data: {
-            labels: months.slice(0, revenues.length),
-            datasets: [
-              {
-                data: revenues,
-                backgroundColor: [
-                  "#3498db",
-                  "#e74c3c",
-                  "#2ecc71",
-                  "#f39c12",
-                  "#9b59b6",
-                  "#1abc9c",
-                  "#34495e",
-                  "#e67e22",
-                  "#95a5a6",
-                  "#f1c40f",
-                  "#8e44ad",
-                  "#c0392b",
-                ],
-              },
-            ],
-          },
-          options: {
-            responsive: true,
-            plugins: {
-              legend: { position: "bottom" },
-            },
-          },
-        });
+        // ✅ ENHANCED PAYOFF CHART UPDATE FUNCTION
+        function updatePayoffChart(mode) {
+            if (!payoffChart || !currentResults) return;
+            
+            // Update button states
+            document.querySelectorAll('.payoff-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            const meanPrice = currentResults.futures_contracts.length > 0 ? 
+                currentResults.futures_contracts.reduce((sum, c) => sum + c.futures_price, 0) / currentResults.futures_contracts.length : 50;
+            
+            let newData, label, color, fillColor;
+            
+            switch(mode) {
+                case 'long':
+                    newData = payoffChart.data.labels.map(price => Math.max(0, (parseFloat(price) - meanPrice) * 1000));
+                    label = 'Long Position P&L ($)';
+                    color = 'rgba(46, 204, 113, 1)';
+                    fillColor = 'rgba(46, 204, 113, 0.2)';
+                    break;
+                case 'short':
+                    newData = payoffChart.data.labels.map(price => Math.max(0, (meanPrice - parseFloat(price)) * 1000));
+                    label = 'Short Position P&L ($)';
+                    color = 'rgba(231, 76, 60, 1)';
+                    fillColor = 'rgba(231, 76, 60, 0.2)';
+                    break;
+                case 'distribution':
+                    const volatility = 0.25; // Use from current results if available
+                    newData = payoffChart.data.labels.map(price => {
+                        const normalizedPrice = (parseFloat(price) - meanPrice) / (meanPrice * volatility);
+                        return Math.exp(-0.5 * normalizedPrice * normalizedPrice) / (volatility * Math.sqrt(2 * Math.PI)) * 100;
+                    });
+                    label = 'Price Probability Distribution (%)';
+                    color = 'rgba(155, 89, 182, 1)';
+                    fillColor = 'rgba(155, 89, 182, 0.2)';
+                    break;
+            }
+            
+            payoffChart.data.datasets[0].data = newData;
+            payoffChart.data.datasets[0].label = label;
+            payoffChart.data.datasets[0].borderColor = color;
+            payoffChart.data.datasets[0].backgroundColor = fillColor;
+            
+            // Update Y-axis label
+            const yAxisTitle = mode === 'distribution' ? 'Probability (%)' : 'P&L per MWh ($)';
+            payoffChart.options.scales.y.title.text = yAxisTitle;
+            
+            payoffChart.update('none'); // No animation for smoother switching
+        }
 
-        // Risk Chart
-        const riskCtx = document.getElementById("riskChart").getContext("2d");
-        riskChart = new Chart(riskCtx, {
-          type: "radar",
-          data: {
-            labels: [
-              "Portfolio Value",
-              "Sharpe Ratio",
-              "Capacity Factor",
-              "Risk Adjusted",
-            ],
-            datasets: [
-              {
-                label: "Risk Metrics",
-                data: [
-                  result.total_portfolio_value / 1000000, // Scale to millions
-                  result.sharpe_ratio * 10, // Scale for visibility
-                  result.capacity_factor,
-                  (1 - Math.abs(result.correlation_solar_price)) * 100,
-                ],
-                backgroundColor: "rgba(155, 89, 182, 0.2)",
-                borderColor: "rgba(155, 89, 182, 1)",
-                borderWidth: 2,
-              },
-            ],
-          },
-          options: {
-            responsive: true,
-            scales: {
-              r: { beginAtZero: true },
-            },
-          },
-        });
-      }
-
-      // ✅ POPULATE TABLE FUNCTION
-      function populateTable(result) {
-        const tbody = document.getElementById("contractsTableBody");
-        tbody.innerHTML = "";
-
-        result.futures_contracts.forEach((contract) => {
-          const row = tbody.insertRow();
-          row.innerHTML = `
-                    <td>${contract.contract_symbol}</td>
+        // ✅ ENHANCED TABLE POPULATION WITH FINANCIAL FORMATTING
+        function populateTable(result) {
+            const tbody = document.getElementById('contractsTableBody');
+            tbody.innerHTML = '';
+            
+            result.futures_contracts.forEach((contract, index) => {
+                const row = tbody.insertRow();
+                const isHighValue = contract.expected_revenue > (result.total_portfolio_value / result.futures_contracts.length);
+                
+                row.innerHTML = `
+                    <td><strong style="color: ${isHighValue ? '#27ae60' : '#34495e'}">${contract.contract_symbol}</strong></td>
                     <td>${contract.delivery_month}</td>
                     <td>${contract.underlying_generation_mwh.toFixed(2)}</td>
                     <td>$${contract.futures_price.toFixed(2)}</td>
-                    <td>$${contract.expected_revenue.toLocaleString()}</td>
+                    <td style="font-weight: ${isHighValue ? 'bold' : 'normal'}; color: ${isHighValue ? '#27ae60' : '#2c3e50'}">
+                        $${contract.expected_revenue.toLocaleString()}
+                    </td>
                     <td>${contract.delta.toFixed(4)}</td>
                 `;
-        });
-      }
+            });
+        }
 
-      // ✅ PORTFOLIO SUMMARY FUNCTION
-      function showPortfolioSummary(result) {
-        const summaryContent = document.getElementById("summaryContent");
-        summaryContent.innerHTML = `
+        // ✅ ENHANCED PORTFOLIO SUMMARY WITH COMPREHENSIVE METRICS
+        function showPortfolioSummary(result) {
+            const summaryContent = document.getElementById('summaryContent');
+            
+            const riskLevel = result.sharpe_ratio > 0.5 ? 'Low' : result.sharpe_ratio > 0.2 ? 'Medium' : 'High';
+            const riskColor = result.sharpe_ratio > 0.5 ? '#27ae60' : result.sharpe_ratio > 0.2 ? '#f39c12' : '#e74c3c';
+            
+            summaryContent.innerHTML = `
                 <div class="form-grid">
                     <div>
-                        <p><strong>Total Portfolio Value:</strong> $${result.total_portfolio_value.toLocaleString()}</p>
-                        <p><strong>Annual Generation:</strong> ${result.annual_generation_mwh.toFixed(
-                          2
-                        )} MWh</p>
-                        <p><strong>Capacity Factor:</strong> ${result.capacity_factor.toFixed(
-                          2
-                        )}%</p>
+                        <p><strong>Mark-to-Market Portfolio Value:</strong> <span style="color: #27ae60; font-size: 1.2em;">$${result.total_portfolio_value.toLocaleString()}</span></p>
+                        <p><strong>Annual Generation (Underlying):</strong> ${result.annual_generation_mwh.toFixed(2)} MWh</p>
+                        <p><strong>Capacity Factor:</strong> ${result.capacity_factor.toFixed(2)}%</p>
+                        <p><strong>Solar-Price Correlation:</strong> ${result.correlation_solar_price.toFixed(4)}</p>
+                        <p><strong>Number of Contracts:</strong> ${result.futures_contracts.length}</p>
                     </div>
                     <div>
-                        <p><strong>Portfolio Volatility:</strong> $${result.portfolio_volatility.toLocaleString()}</p>
-                        <p><strong>Sharpe Ratio:</strong> ${result.sharpe_ratio.toFixed(
-                          4
-                        )}</p>
-                        <p><strong>95% VaR:</strong> $${result.value_at_risk_95.toLocaleString()}</p>
+                        <p><strong>Portfolio Volatility (1σ):</strong> $${result.portfolio_volatility.toLocaleString()}</p>
+                        <p><strong>Risk Level:</strong> <span style="color: ${riskColor}; font-weight: bold;">${riskLevel} Risk</span></p>
+                        <p><strong>Risk-Adjusted Return (Sharpe):</strong> ${result.sharpe_ratio.toFixed(4)}</p>
+                        <p><strong>95% Value at Risk:</strong> <span style="color: #e74c3c;">$${result.value_at_risk_95.toLocaleString()}</span></p>
+                        <p><strong>95% Expected Shortfall:</strong> <span style="color: #c0392b;">$${result.expected_shortfall_95.toLocaleString()}</span></p>
                     </div>
                 </div>
+                <div class="financial-note" style="margin-top: 20px;">
+                    <strong>📊 Risk Interpretation:</strong><br>
+                    • <strong>Value at Risk (VaR):</strong> Maximum expected loss at 95% confidence level over the contract period<br>
+                    • <strong>Expected Shortfall:</strong> Average loss in worst-case 5% scenarios (tail risk measure)<br>
+                    • <strong>Sharpe Ratio:</strong> Excess return per unit of risk (>0.5 = good, >1.0 = excellent)<br>
+                    • <strong>Correlation:</strong> Relationship between solar generation and electricity prices (-1 to +1)
+                </div>
             `;
-      }
-
-      // ✅ CSV EXPORT FUNCTION
-      async function exportCSV() {
-        const formData = new FormData(document.getElementById("futuresForm"));
-        const data = {};
-
-        formData.forEach((value, key) => {
-          if (value === "" || value === null) {
-            data[key] = null;
-          } else if (!isNaN(value) && value !== "") {
-            data[key] = Number(value);
-          } else {
-            data[key] = value;
-          }
-        });
-
-        try {
-          // Show loading state
-          const exportBtn = document.querySelector(".btn-secondary");
-          const originalText = exportBtn.textContent;
-          exportBtn.textContent = "⏳ Exporting...";
-          exportBtn.disabled = true;
-
-          const response = await fetch("/futures/electricity-csv", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Accept: "text/csv",
-            },
-            body: JSON.stringify(data),
-          });
-
-          if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`HTTP ${response.status}: ${errorText}`);
-          }
-
-          // Get the blob and create download
-          const blob = await response.blob();
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = `solar_futures_analysis_${
-            new Date().toISOString().split("T")[0]
-          }.csv`;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          window.URL.revokeObjectURL(url);
-
-          // Show success message
-          alert("✅ CSV file downloaded successfully!");
-        } catch (error) {
-          console.error("CSV Export Error:", error);
-          alert(`❌ CSV export failed: ${error.message}`);
-        } finally {
-          // Reset button state
-          const exportBtn = document.querySelector(".btn-secondary");
-          exportBtn.textContent = originalText;
-          exportBtn.disabled = false;
         }
-      }
 
-      // ✅ SOLAR FORM HANDLER
-      document
-        .getElementById("solarForm")
-        .addEventListener("submit", async function (e) {
-          e.preventDefault();
-
-          const formData = new FormData(this);
-          const data = {};
-          formData.forEach((value, key) => {
-            data[key] = !isNaN(value) && value !== "" ? Number(value) : value;
-          });
-
-          try {
-            const response = await fetch("/solar/output", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(data),
+        // ✅ PRODUCTION-READY CSV EXPORT WITH COMPREHENSIVE ERROR HANDLING
+        async function exportCSV() {
+            const formData = new FormData(document.getElementById('futuresForm'));
+            const data = {};
+            
+            formData.forEach((value, key) => {
+                if (value === '' || value === null) {
+                    data[key] = null;
+                } else if (!isNaN(value) && value !== '') {
+                    data[key] = Number(value);
+                } else {
+                    data[key] = value;
+                }
             });
 
-            const result = await response.json();
-            document.getElementById("solarResults").style.display = "block";
-            document.getElementById("solarResults").textContent =
-              JSON.stringify(result, null, 2);
-          } catch (error) {
-            document.getElementById("solarResults").style.display = "block";
-            document.getElementById("solarResults").textContent =
-              "Error: " + error.message;
-          }
+            const exportBtn = document.querySelector('.btn-secondary');
+            const originalText = exportBtn.textContent;
+
+            try {
+                exportBtn.textContent = '⏳ Generating Portfolio Report...';
+                exportBtn.disabled = true;
+
+                const response = await fetch('/futures/electricity-csv', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'text/csv'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Export failed (${response.status}): ${errorText}`);
+                }
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `solar_futures_portfolio_${new Date().toISOString().split('T')[0]}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+
+                // Success feedback
+                exportBtn.textContent = '✅ Export Complete!';
+                exportBtn.style.background = 'linear-gradient(45deg, #27ae60, #2ecc71)';
+                setTimeout(() => {
+                    exportBtn.textContent = originalText;
+                    exportBtn.style.background = 'linear-gradient(45deg, #27ae60, #2ecc71)';
+                }, 2000);
+                
+            } catch (error) {
+                console.error('CSV Export Error:', error);
+                exportBtn.textContent = '❌ Export Failed';
+                exportBtn.style.background = 'linear-gradient(45deg, #e74c3c, #c0392b)';
+                
+                // Show detailed error to user
+                alert(`❌ CSV export failed: ${error.message}\n\nPlease check:\n• Internet connection\n• Valid input parameters\n• API service status (/health)`);
+                
+                setTimeout(() => {
+                    exportBtn.textContent = originalText;
+                    exportBtn.style.background = 'linear-gradient(45deg, #27ae60, #2ecc71)';
+                }, 3000);
+            } finally {
+                exportBtn.disabled = false;
+            }
+        }
+
+        // ✅ ENHANCED SOLAR FORM HANDLER WITH BETTER UX
+        document.getElementById('solarForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const data = {};
+            formData.forEach((value, key) => {
+                data[key] = !isNaN(value) && value !== '' ? Number(value) : value;
+            });
+
+            const resultsDiv = document.getElementById('solarResults');
+            
+            try {
+                resultsDiv.innerHTML = '🔄 Analyzing solar system performance...';
+                resultsDiv.style.display = 'block';
+                
+                const response = await fetch('/solar/output', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+                }
+
+                const result = await response.json();
+                
+                // Format the output nicely
+                const formattedResult = {
+                    "System Summary": {
+                        "Annual AC Generation": `${result.ac_annual.toLocaleString()} kWh`,
+                        "Capacity Factor": `${result.capacity_factor}%`,
+                        "Annual Solar Resource": `${result.solrad_annual} kWh/m²/day`
+                    },
+                    "Monthly Generation (kWh)": result.ac_monthly.map((val, idx) => 
+                        `${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][idx]}: ${Math.round(val)}`
+                    ),
+                    "Weather Station": result.station_info
+                };
+                
+                resultsDiv.textContent = JSON.stringify(formattedResult, null, 2);
+                
+            } catch (error) {
+                console.error('Solar analysis error:', error);
+                resultsDiv.innerHTML = `<span style="color: #e74c3c;">❌ Error: ${error.message}</span>`;
+            }
         });
 
-      // ✅ API ENDPOINT TESTER
-      async function testEndpoint(endpoint, method) {
-        try {
-          const response = await fetch(endpoint, { method: method });
-          const result = await response.json();
-
-          const responseDiv = document.getElementById(
-            `response-${endpoint.split("/").pop()}`
-          );
-          responseDiv.style.display = "block";
-          responseDiv.textContent = JSON.stringify(result, null, 2);
-        } catch (error) {
-          const responseDiv = document.getElementById(
-            `response-${endpoint.split("/").pop()}`
-          );
-          responseDiv.style.display = "block";
-          responseDiv.textContent = "Error: " + error.message;
+        // ✅ COMPREHENSIVE API ENDPOINT TESTING
+        async function testEndpoint(endpoint, method, responseId) {
+            const responseDiv = document.getElementById(`response-${responseId}`);
+            
+            try {
+                responseDiv.innerHTML = '🔄 Testing endpoint...';
+                responseDiv.style.display = 'block';
+                
+                const response = await fetch(endpoint, { 
+                    method: method,
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+                }
+                
+                const result = await response.json();
+                responseDiv.innerHTML = `<span style="color: #27ae60;">✅ Success!</span>\n\n${JSON.stringify(result, null, 2)}`;
+                
+            } catch (error) {
+                console.error(`API test error for ${endpoint}:`, error);
+                responseDiv.innerHTML = `<span style="color: #e74c3c;">❌ Error: ${error.message}</span>`;
+            }
         }
-      }
 
-      // Clear results function
-      function clearResults() {
-        document.getElementById("resultsSection").classList.remove("show");
+        // ✅ SOLAR QUICK ESTIMATE TEST FUNCTION
+        async function testSolarQuickEstimate() {
+            const responseDiv = document.getElementById('response-solar-quick');
+            
+            try {
+                responseDiv.innerHTML = '🔄 Testing solar quick estimate...';
+                responseDiv.style.display = 'block';
+                
+                const response = await fetch('/solar/quick-estimate?latitude=40.7128&longitude=-74.0060&capacity=10.0');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+                }
+                
+                const result = await response.json();
+                responseDiv.innerHTML = `<span style="color: #27ae60;">✅ Success!</span>\n\n${JSON.stringify(result, null, 2)}`;
+                
+            } catch (error) {
+                console.error('Solar quick estimate error:', error);
+                responseDiv.innerHTML = `<span style="color: #e74c3c;">❌ Error: ${error.message}</span>`;
+            }
+        }
 
-        // Destroy existing charts
-        if (generationChart) generationChart.destroy();
-        if (pricesChart) pricesChart.destroy();
-        if (revenueChart) revenueChart.destroy();
-        if (riskChart) riskChart.destroy();
-      }
+        // ✅ CLEAR RESULTS WITH PROPER CLEANUP
+        function clearResults() {
+            document.getElementById('resultsSection').classList.remove('show');
+            
+            // Destroy existing charts to prevent memory leaks
+            [generationChart, pricesChart, revenueChart, riskChart, payoffChart].forEach(chart => {
+                if (chart) {
+                    chart.destroy();
+                }
+            });
+            
+            // Reset chart variables
+            generationChart = pricesChart = revenueChart = riskChart = payoffChart = null;
+            currentResults = null;
+            
+            // Visual feedback
+            const clearBtn = document.querySelector('.btn-export');
+            const originalText = clearBtn.textContent;
+            clearBtn.textContent = '✅ Cleared!';
+            setTimeout(() => {
+                clearBtn.textContent = originalText;
+            }, 1000);
+        }
+
+        // ✅ KEYBOARD SHORTCUTS FOR POWER USERS
+        document.addEventListener('keydown', function(e) {
+            // Ctrl/Cmd + Enter to calculate futures
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                e.preventDefault();
+                document.getElementById('futuresForm').dispatchEvent(new Event('submit', { bubbles: true }));
+            }
+            
+            // Ctrl/Cmd + E to export
+            if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
+                e.preventDefault();
+                exportCSV();
+            }
+            
+            // Ctrl/Cmd + R to clear results
+            if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+                e.preventDefault();
+                clearResults();
+            }
+        });
+
+        // ✅ INITIALIZE UI ON PAGE LOAD
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add keyboard shortcut hints
+            const calculateBtn = document.querySelector('.btn[type="submit"]');
+            calculateBtn.title = 'Click or press Ctrl+Enter to calculate';
+            
+            const exportBtn = document.querySelector('.btn-secondary');
+            exportBtn.title = 'Click or press Ctrl+E to export CSV';
+            
+            const clearBtn = document.querySelector('.btn-export');
+            clearBtn.title = 'Click or press Ctrl+R to clear results';
+            
+            console.log('🚀 ChainFLY Solar & Futures API Interface Loaded');
+            console.log('💡 Keyboard shortcuts: Ctrl+Enter (calculate), Ctrl+E (export), Ctrl+R (clear)');
+        });
     </script>
-  </body>
+</body>
 </html>
